@@ -4,7 +4,7 @@ import { PlayCircle } from 'lucide-react';
 
 const courses = [
   { id: 1, title: 'Introduction to Software Development', progress: 75, duration: '4 Weeks', instructor: 'Dr. Smith', status: 'Active', image: 'https://images.pexels.com/photos/5380664/pexels-photo-5380664.jpeg' },
-  { id: 2, title: 'AI Tools for Software Development', progress: 40, duration: '3 Weeks', instructor: 'Jane Doe', status: 'Active', image: '/ai-tools-course.png' },
+  { id: 2, title: 'AI Tools for Software Development', progress: 40, duration: '3 Weeks', instructor: 'Jane Doe', status: 'Active', image: 'https://images.pexels.com/photos/8294606/pexels-photo-8294606.jpeg' },
   { id: 3, title: 'Vibe Coding', progress: 90, duration: '2 Weeks', instructor: 'Alex Chen', status: 'Active', image: 'https://images.pexels.com/photos/29445974/pexels-photo-29445974.jpeg' },
   { id: 4, title: 'Frontend Development', progress: 20, duration: '6 Weeks', instructor: 'Sarah Lee', status: 'Active', image: 'https://images.pexels.com/photos/3987019/pexels-photo-3987019.jpeg' },
   { id: 5, title: 'Backend Development', progress: 10, duration: '8 Weeks', instructor: 'Mike Ross', status: 'Active', image: 'https://images.pexels.com/photos/5380589/pexels-photo-5380589.jpeg' },
