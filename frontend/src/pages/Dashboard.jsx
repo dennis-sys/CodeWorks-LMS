@@ -7,7 +7,7 @@ const courses = [
   { id: 2, title: 'AI Tools for Software Development', progress: 40, duration: '3 Weeks', instructor: 'Jane Doe', status: 'Active', image: '/ai-tools-course.png' },
   { id: 3, title: 'Vibe Coding', progress: 90, duration: '2 Weeks', instructor: 'Alex Chen', status: 'Active', image: '/vibe-coding-course.png' },
   { id: 4, title: 'Frontend Development', progress: 20, duration: '6 Weeks', instructor: 'Sarah Lee', status: 'Active', image: 'https://images.pexels.com/photos/3987019/pexels-photo-3987019.jpeg' },
-  { id: 5, title: 'Backend Development', progress: 10, duration: '8 Weeks', instructor: 'Mike Ross', status: 'Active' },
+  { id: 5, title: 'Backend Development', progress: 10, duration: '8 Weeks', instructor: 'Mike Ross', status: 'Active', image: 'https://images.pexels.com/photos/5380589/pexels-photo-5380589.jpeg' },
   { id: 6, title: 'Database', progress: 55, duration: '3 Weeks', instructor: 'Emily Clark', status: 'Active' },
   { id: 7, title: 'Full Stack Application', progress: 0, duration: '10 Weeks', instructor: 'David Kim', status: 'Not Started' },
 ];
