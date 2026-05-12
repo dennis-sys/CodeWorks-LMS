@@ -39,6 +39,31 @@ export default function SignUp() {
         password: form.password,
       });
 
+      // If rate limited, try signing the user in directly —
+      // their account may already exist from a previous attempt
+      if (authError?.message?.includes('email rate limit')) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: form.email.trim(),
+          password: form.password,
+        });
+        if (!signInError && signInData?.user) {
+          await supabase.from('users').upsert(
+            [{
+              auth_id: signInData.user.id,
+              full_name: form.fullName.trim(),
+              email: form.email.trim(),
+              role: 'student',
+            }],
+            { onConflict: 'email' }
+          );
+          setSuccess(true);
+          return;
+        }
+        // Account doesn't exist yet — show a clear wait message
+        setError('Too many sign-up attempts. Please wait a few minutes and try again.');
+        return;
+      }
+
       if (authError) throw authError;
 
       if (authData.user) {
