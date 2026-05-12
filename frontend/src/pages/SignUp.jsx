@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../services/supabase';
 import { Loader2, Eye, EyeOff, CheckCircle } from 'lucide-react';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export default function SignUp() {
   const [form, setForm] = useState({ fullName: '', email: '', password: '', confirmPassword: '' });
@@ -34,63 +35,26 @@ export default function SignUp() {
     setError('');
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: form.email.trim(),
-        password: form.password,
-      });
-
-      // If rate limited, try signing the user in directly —
-      // their account may already exist from a previous attempt
-      if (authError?.message?.includes('email rate limit')) {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      const res = await fetch(`${API_URL}/api/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           email: form.email.trim(),
           password: form.password,
-        });
-        if (!signInError && signInData?.user) {
-          await supabase.from('users').upsert(
-            [{
-              auth_id: signInData.user.id,
-              full_name: form.fullName.trim(),
-              email: form.email.trim(),
-              role: 'student',
-            }],
-            { onConflict: 'email' }
-          );
-          setSuccess(true);
-          return;
-        }
-        // Account doesn't exist yet — show a clear wait message
-        setError('Too many sign-up attempts. Please wait a few minutes and try again.');
+          fullName: form.fullName.trim(),
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        setError(json.message || 'Sign up failed. Please try again.');
         return;
-      }
-
-      if (authError) throw authError;
-
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('users')
-          .upsert(
-            [{
-              auth_id: authData.user.id,
-              full_name: form.fullName.trim(),
-              email: form.email.trim(),
-              role: 'student',
-            }],
-            { onConflict: 'email' }
-          );
-
-        if (profileError) throw profileError;
       }
 
       setSuccess(true);
     } catch (err) {
-      if (err.message?.includes('already registered') || err.message?.includes('already been registered')) {
-        setError('An account with this email already exists. Please sign in instead.');
-      } else if (err.message?.includes('duplicate key') || err.message?.includes('unique constraint')) {
-        setError('An account with this email already exists. Please sign in instead.');
-      } else {
-        setError(err.message || 'Sign up failed. Please try again.');
-      }
+      setError('Unable to connect to the server. Please try again.');
     } finally {
       setLoading(false);
     }

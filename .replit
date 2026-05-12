@@ -58,3 +58,8 @@ externalPort = 80
 deploymentTarget = "autoscale"
 run = ["bash", "-c", "cd backend && npm install && node src/server.js"]
 build = ["bash", "-c", "cd frontend && npm install && npm run build"]
+
+[userenv]
+
+[userenv.development]
+VITE_API_URL = "http://localhost:3001"
