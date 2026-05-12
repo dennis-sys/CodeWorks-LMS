@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Loader2, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import Logo from '../components/Logo';
 
 export default function SignUp() {
   const [form, setForm] = useState({ fullName: '', email: '', password: '', confirmPassword: '' });
@@ -84,7 +85,7 @@ export default function SignUp() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-white to-sky-50 p-4">
       <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl border border-sky-100">
         <div className="text-center mb-8">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500 text-white text-2xl font-black mb-4">C</div>
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500 text-white mb-4"><Logo className="w-6 h-6" /></div>
           <h2 className="text-2xl font-black text-slate-900">Create an Account</h2>
           <p className="text-slate-500 mt-2 text-sm">Join CodeWorks and start your learning journey.</p>
         </div>

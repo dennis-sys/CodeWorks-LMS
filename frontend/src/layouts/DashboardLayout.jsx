@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Calendar, FileText, Award, Menu, X, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import Logo from '../components/Logo';
 import { supabase } from '../services/supabase';
 
 const navItems = [
@@ -52,12 +53,12 @@ export default function DashboardLayout() {
           <div className={`flex items-center mb-8 mt-2 ${collapsed ? 'justify-center' : 'justify-between px-1'}`}>
             {!collapsed && (
               <Link to="/" className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-white font-black text-lg">C</div>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-white"><Logo className="w-5 h-5" /></div>
                 <span className="font-bold text-xl tracking-tight">CodeWorks</span>
               </Link>
             )}
             {collapsed && (
-              <Link to="/" className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-white font-black text-lg">C</Link>
+              <Link to="/" className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-white"><Logo className="w-5 h-5" /></Link>
             )}
             {/* Collapse button — desktop only */}
             <button
