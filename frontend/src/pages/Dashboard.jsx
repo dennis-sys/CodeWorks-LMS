@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import { PlayCircle } from 'lucide-react';
 
 const courses = [
-  { id: 1, title: 'Introduction to Software Development', progress: 75, duration: '4 Weeks', instructor: 'Dr. Smith', status: 'Active' },
+  { id: 1, title: 'Introduction to Software Development', progress: 75, duration: '4 Weeks', instructor: 'Dr. Smith', status: 'Active', image: 'https://images.pexels.com/photos/33607952/pexels-photo-33607952.png' },
   { id: 2, title: 'AI Tools for Software Development', progress: 40, duration: '3 Weeks', instructor: 'Jane Doe', status: 'Active' },
   { id: 3, title: 'Vibe Coding', progress: 90, duration: '2 Weeks', instructor: 'Alex Chen', status: 'Active' },
   { id: 4, title: 'Frontend Development', progress: 20, duration: '6 Weeks', instructor: 'Sarah Lee', status: 'Active' },
@@ -38,11 +38,15 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {courses.map((c) => (
             <div key={c.id} className="group glass rounded-2xl overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300">
-              <div className="h-36 bg-gradient-to-r from-sky-100 to-slate-100 relative">
+              <div className="h-36 relative overflow-hidden">
+                {c.image
+                  ? <img src={c.image} alt={c.title} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full bg-gradient-to-r from-sky-100 to-slate-100" />
+                }
                 <span className="absolute top-3 right-3 bg-white/80 backdrop-blur px-2 py-1 rounded-md text-xs font-semibold text-sky-600 shadow-sm">
                   {c.status}
                 </span>
-                <div className="absolute bottom-3 left-3 font-bold text-lg text-slate-800 drop-shadow-sm">{c.duration}</div>
+                <div className="absolute bottom-3 left-3 font-bold text-lg text-white drop-shadow-md">{c.duration}</div>
               </div>
               <div className="p-5 space-y-3">
                 <h3 className="font-bold text-slate-900 line-clamp-2 h-12">{c.title}</h3>
