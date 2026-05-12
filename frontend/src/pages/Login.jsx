@@ -1,0 +1,135 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../services/supabase';
+import { useAuthStore } from '../store/authStore';
+import { Loader2 } from 'lucide-react';
+
+export default function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
+      if (error) throw error;
+      
+      // Fetch user profile
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('auth_id', data.user.id)
+        .single();
+      
+      useAuthStore.getState().setUser(profile, data.session);
+      navigate('/');
+    } catch (err) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignUp = async () => {
+    const signupEmail = prompt('Enter your email:');
+    if (!signupEmail) return;
+    
+    const signupPassword = prompt('Enter your password (min 6 characters):');
+    if (!signupPassword || signupPassword.length < 6) {
+      alert('Password must be at least 6 characters');
+      return;
+    }
+    
+    const fullName = prompt('Enter your full name:');
+    if (!fullName) return;
+    
+    try {
+      // Sign up with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: signupEmail,
+        password: signupPassword,
+      });
+      
+      if (authError) throw authError;
+      
+      // Create user profile in database
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert([
+            {
+              auth_id: authData.user.id,
+              full_name: fullName,
+              email: signupEmail,
+              role: 'student'
+            }
+          ]);
+        
+        if (profileError) throw profileError;
+      }
+      
+      alert('Account created! Please check your email to confirm.');
+    } catch (err) {
+      alert('Sign up failed: ' + err.message);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-white to-sky-50 p-4">
+      <div className="w-full max-w-md glass rounded-3xl p-8 shadow-xl border border-sky-100">
+        <div className="text-center mb-8">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500 text-white text-2xl font-black mb-4">C</div>
+          <h2 className="text-2xl font-black text-slate-900">Welcome to CodeWorks</h2>
+          <p className="text-slate-500 mt-2 text-sm">Enter your credentials to access your dashboard.</p>
+        </div>
+        
+        <form onSubmit={handleLogin} className="space-y-4">
+          <input 
+            type="email" 
+            placeholder="Email Address" 
+            value={email} 
+            onChange={e => setEmail(e.target.value)} 
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white/50 focus:ring-2 focus:ring-sky-400 focus:outline-none transition-all" 
+            required 
+          />
+          <input 
+            type="password" 
+            placeholder="Password" 
+            value={password} 
+            onChange={e => setPassword(e.target.value)} 
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white/50 focus:ring-2 focus:ring-sky-400 focus:outline-none transition-all" 
+            required 
+          />
+          
+          {error && (
+            <p className="text-red-500 text-sm text-center bg-red-50 p-2 rounded-lg">
+              {error}
+            </p>
+          )}
+          
+          <button 
+            disabled={loading} 
+            className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-sky-200 disabled:opacity-70 flex items-center justify-center"
+          >
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
+          </button>
+          
+          <div className="flex justify-between text-sm pt-2">
+            <a href="/forgot-password" className="text-sky-600 hover:underline">Forgot Password?</a>
+            <span className="text-slate-500">
+              No account? <button type="button" onClick={handleSignUp} className="text-sky-600 hover:underline font-medium">Sign Up</button>
+            </span>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
