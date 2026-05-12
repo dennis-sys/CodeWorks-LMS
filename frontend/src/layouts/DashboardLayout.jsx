@@ -19,9 +19,14 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    useAuthStore.getState().clearAuth();
-    navigate('/login');
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Sign out error:', err);
+    } finally {
+      useAuthStore.getState().clearAuth();
+      navigate('/login', { replace: true });
+    }
   };
 
   return (
