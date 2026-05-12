@@ -9,7 +9,7 @@ export const apiFetch = async (endpoint, options = {}) => {
   };
 
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+    const res = await fetch(`/api${endpoint}`, {
       ...options,
       headers,
     });

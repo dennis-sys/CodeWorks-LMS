@@ -62,4 +62,3 @@ build = ["bash", "-c", "cd frontend && npm install && npm run build"]
 [userenv]
 
 [userenv.development]
-VITE_API_URL = "http://localhost:3001"
