@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../store/authStore';
 import { Loader2 } from 'lucide-react';
@@ -35,50 +35,6 @@ export default function Login() {
       setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSignUp = async () => {
-    const signupEmail = prompt('Enter your email:');
-    if (!signupEmail) return;
-    
-    const signupPassword = prompt('Enter your password (min 6 characters):');
-    if (!signupPassword || signupPassword.length < 6) {
-      alert('Password must be at least 6 characters');
-      return;
-    }
-    
-    const fullName = prompt('Enter your full name:');
-    if (!fullName) return;
-    
-    try {
-      // Sign up with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: signupEmail,
-        password: signupPassword,
-      });
-      
-      if (authError) throw authError;
-      
-      // Create user profile in database
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert([
-            {
-              auth_id: authData.user.id,
-              full_name: fullName,
-              email: signupEmail,
-              role: 'student'
-            }
-          ]);
-        
-        if (profileError) throw profileError;
-      }
-      
-      alert('Account created! Please check your email to confirm.');
-    } catch (err) {
-      alert('Sign up failed: ' + err.message);
     }
   };
 
@@ -125,7 +81,7 @@ export default function Login() {
           <div className="flex justify-between text-sm pt-2">
             <a href="/forgot-password" className="text-sky-600 hover:underline">Forgot Password?</a>
             <span className="text-slate-500">
-              No account? <button type="button" onClick={handleSignUp} className="text-sky-600 hover:underline font-medium">Sign Up</button>
+              No account? <Link to="/signup" className="text-sky-600 hover:underline font-medium">Sign Up</Link>
             </span>
           </div>
         </form>

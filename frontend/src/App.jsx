@@ -5,6 +5,7 @@ import { supabase } from './services/supabase';
 import { useAuthStore } from './store/authStore';
 import DashboardLayout from './layouts/DashboardLayout';
 import Login from './pages/Login';
+import SignUp from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
 import Schedule from './pages/Schedule';
 import Assignments from './pages/Assignments';
@@ -64,6 +65,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
         <Route element={<DashboardLayout />}>
           <Route index element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="schedule" element={<ProtectedRoute><Schedule /></ProtectedRoute>} />
