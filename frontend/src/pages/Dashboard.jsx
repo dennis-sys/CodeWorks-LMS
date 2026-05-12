@@ -32,33 +32,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stats & Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="glass rounded-2xl p-6 shadow-soft">
-          <h3 className="font-bold text-slate-700 mb-4">Course Distribution</h3>
-          <div className="h-48 flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={chartData} innerRadius={50} outerRadius={70} paddingAngle={4} dataKey="value">
-                  {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        <div className="md:col-span-2 glass rounded-2xl p-6 shadow-soft">
-          <h3 className="font-bold text-slate-700 mb-4">Weekly Activity</h3>
-          <ResponsiveContainer width="100%" height="160">
-            <BarChart data={[{day:'M',h:3},{day:'T',h:5},{day:'W',h:2},{day:'T',h:7},{day:'F',h:4},{day:'S',h:6},{day:'S',h:1}]}>
-              <XAxis dataKey="day" tick={{fontSize:12}} axisLine={false} tickLine={false} />
-              <Tooltip />
-              <Bar dataKey="h" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={24} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
       {/* Course Grid */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold text-slate-800">Your Courses</h2>
@@ -92,6 +65,33 @@ export default function Dashboard() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Stats & Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="glass rounded-2xl p-6 shadow-soft">
+          <h3 className="font-bold text-slate-700 mb-4">Course Distribution</h3>
+          <div className="h-48 flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={chartData} innerRadius={50} outerRadius={70} paddingAngle={4} dataKey="value">
+                  {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        <div className="md:col-span-2 glass rounded-2xl p-6 shadow-soft">
+          <h3 className="font-bold text-slate-700 mb-4">Weekly Activity</h3>
+          <ResponsiveContainer width="100%" height="160">
+            <BarChart data={[{day:'M',h:3},{day:'T',h:5},{day:'W',h:2},{day:'T',h:7},{day:'F',h:4},{day:'S',h:6},{day:'S',h:1}]}>
+              <XAxis dataKey="day" tick={{fontSize:12}} axisLine={false} tickLine={false} />
+              <Tooltip />
+              <Bar dataKey="h" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={24} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>
