@@ -921,7 +921,7 @@ export default function LearningModule() {
             <span>Courses</span> <ChevronRight className="w-3 h-3" /> <span className="text-sky-600 font-medium">Introduction to Software Development</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900">Introduction to Software Development</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Dr. Smith · 4 Weeks · Module {currentIndex + 1} of {TABS.length}</p>
+          <p className="text-slate-500 text-sm mt-0.5">Dr. Smith · 4 Weeks · Module 1 of 6</p>
         </div>
       </div>
 
@@ -929,7 +929,7 @@ export default function LearningModule() {
       <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
         <div
           className="h-full bg-sky-500 rounded-full transition-all duration-500"
-          style={{ width: `${((currentIndex + 1) / TABS.length) * 100}%` }}
+          style={{ width: `75%` }}
         />
       </div>
 
