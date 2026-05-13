@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { supabase } from '../services/supabase';
+import { useCourseStore } from '../store/courseStore';
 import {
   BookOpen, Code2, Server, Database, CheckCircle2,
   XCircle, ArrowLeft, ArrowRight, Trophy, RotateCcw,
@@ -312,7 +312,7 @@ function getGrade(pct) {
 
 // ── Quiz Component ───────────────────────────────────────────────────────────
 
-function Quiz({ user, session }) {
+function Quiz({ user, session, onComplete }) {
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -353,13 +353,17 @@ function Quiz({ user, session }) {
           answers,
         }),
       });
-      if (res.ok) setSavedToDb(true);
-      else {
+      if (res.ok) {
+        setSavedToDb(true);
+        onComplete?.(finalScore, finalPct, finalGrade.letter);
+      } else {
         const d = await res.json();
         setSubmitError(d.message || 'Could not save to database.');
+        onComplete?.(finalScore, finalPct, finalGrade.letter);
       }
     } catch {
       setSubmitError('Network error — result not saved to database.');
+      onComplete?.(finalScore, finalPct, finalGrade.letter);
     } finally {
       setSubmitting(false);
     }
@@ -883,18 +887,35 @@ CREATE POLICY "Users can insert own assignments"
 
 // ── Main Page ────────────────────────────────────────────────────────────────
 
+const COURSE_ID = 1;
+
 export default function LearningModule() {
   const [activeTab, setActiveTab] = useState('overview');
   const navigate = useNavigate();
   const { user, session } = useAuthStore();
+  const { visitSection, setProgress } = useCourseStore();
+
+  const courseData = useCourseStore(state => state.courses.find(c => c.id === COURSE_ID));
+  const liveProgress = courseData?.progress ?? 75;
+  const visitedSections = courseData?.visitedSections ?? [];
 
   const currentIndex = TABS.findIndex(t => t.id === activeTab);
 
+  const switchTab = (tabId) => {
+    setActiveTab(tabId);
+    visitSection(COURSE_ID, tabId);
+  };
+
   const goNext = () => {
-    if (currentIndex < TABS.length - 1) setActiveTab(TABS[currentIndex + 1].id);
+    if (currentIndex < TABS.length - 1) switchTab(TABS[currentIndex + 1].id);
   };
   const goPrev = () => {
-    if (currentIndex > 0) setActiveTab(TABS[currentIndex - 1].id);
+    if (currentIndex > 0) switchTab(TABS[currentIndex - 1].id);
+  };
+
+  const handleQuizComplete = (_score, pct, _grade) => {
+    visitSection(COURSE_ID, 'quiz');
+    setProgress(COURSE_ID, Math.max(liveProgress, pct >= 50 ? 100 : 90));
   };
 
   const renderSection = () => {
@@ -904,7 +925,7 @@ export default function LearningModule() {
       case 'frontend':      return <FrontendSection />;
       case 'backend':       return <BackendSection />;
       case 'database':      return <DatabaseSection />;
-      case 'quiz':          return <Quiz user={user} session={session} />;
+      case 'quiz':          return <Quiz user={user} session={session} onComplete={handleQuizComplete} />;
       default:              return null;
     }
   };
@@ -929,7 +950,7 @@ export default function LearningModule() {
       <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
         <div
           className="h-full bg-sky-500 rounded-full transition-all duration-500"
-          style={{ width: `75%` }}
+          style={{ width: `${liveProgress}%` }}
         />
       </div>
 
@@ -937,20 +958,21 @@ export default function LearningModule() {
       <div className="flex gap-1 overflow-x-auto bg-slate-100 p-1 rounded-2xl">
         {TABS.map(tab => {
           const Icon = tab.icon;
-          const done = TABS.findIndex(t => t.id === tab.id) < currentIndex;
+          const visited = visitedSections.includes(tab.id);
+          const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => switchTab(tab.id)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex-1 justify-center ${
-                activeTab === tab.id
+                isActive
                   ? 'bg-white text-sky-600 shadow-sm'
-                  : done
+                  : visited
                   ? 'text-emerald-600 hover:bg-white/60'
                   : 'text-slate-500 hover:bg-white/60'
               }`}
             >
-              {done && activeTab !== tab.id
+              {visited && !isActive
                 ? <CheckCircle2 className="w-3.5 h-3.5" />
                 : <Icon className="w-3.5 h-3.5" />}
               <span className="hidden sm:inline">{tab.label}</span>
