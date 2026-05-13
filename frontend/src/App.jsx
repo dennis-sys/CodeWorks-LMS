@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Schedule from './pages/Schedule';
 import Assignments from './pages/Assignments';
 import Certificates from './pages/Certificates';
+import LearningModule from './pages/LearningModule';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuthStore();
@@ -72,6 +73,7 @@ function App() {
           <Route path="schedule" element={<ProtectedRoute><Schedule /></ProtectedRoute>} />
           <Route path="assignments" element={<ProtectedRoute><Assignments /></ProtectedRoute>} />
           <Route path="certificates" element={<ProtectedRoute><Certificates /></ProtectedRoute>} />
+          <Route path="courses/1" element={<ProtectedRoute><LearningModule /></ProtectedRoute>} />
         </Route>
       </Routes>
     </Router>

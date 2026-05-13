@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { PlayCircle } from 'lucide-react';
 
@@ -18,7 +19,10 @@ const chartData = [
   { name: 'Upcoming', value: 2, color: '#cbd5e1' },
 ];
 
+const courseRoutes = { 1: '/courses/1' };
+
 export default function Dashboard() {
+  const navigate = useNavigate();
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
@@ -62,7 +66,10 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <button className="w-full mt-2 flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2.5 rounded-xl transition-all shadow-md hover:shadow-sky-200">
+                <button
+                  onClick={() => courseRoutes[c.id] ? navigate(courseRoutes[c.id]) : null}
+                  className={`w-full mt-2 flex items-center justify-center gap-2 font-semibold py-2.5 rounded-xl transition-all shadow-md ${courseRoutes[c.id] ? 'bg-sky-500 hover:bg-sky-600 text-white hover:shadow-sky-200 cursor-pointer' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+                >
                   <PlayCircle className="w-4 h-4" />
                   Continue Learning
                 </button>

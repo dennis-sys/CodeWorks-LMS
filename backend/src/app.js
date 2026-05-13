@@ -16,6 +16,7 @@ app.use(morgan('dev'));
 // Routes
 app.use('/api/courses', require('./routes/courseRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/assignments', require('./routes/assignmentRoutes'));
 // app.use('/api/users', require('./routes/userRoutes'));
 
 // Global Error Handler
