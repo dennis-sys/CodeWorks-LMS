@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
+const STORAGE_KEY = 'lms-course-store';
 const TOTAL_SECTIONS = 6;
 
 const INITIAL_COURSES = [
@@ -13,39 +13,46 @@ const INITIAL_COURSES = [
   { id: 7, progress: 0,  visitedSections: [] },
 ];
 
-export const useCourseStore = create(
-  persist(
-    (set, get) => ({
-      courses: INITIAL_COURSES,
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return INITIAL_COURSES;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : INITIAL_COURSES;
+  } catch {
+    return INITIAL_COURSES;
+  }
+}
 
-      getCourse: (id) => get().courses.find(c => c.id === id) ?? null,
+function saveToStorage(courses) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(courses));
+  } catch {
+  }
+}
 
-      visitSection: (courseId, sectionId) => {
-        set(state => ({
-          courses: state.courses.map(c => {
-            if (c.id !== courseId) return c;
-            if (c.visitedSections.includes(sectionId)) return c;
-            const visited = [...c.visitedSections, sectionId];
-            const calculated = Math.round((visited.length / TOTAL_SECTIONS) * 100);
-            return {
-              ...c,
-              visitedSections: visited,
-              progress: Math.max(c.progress, calculated),
-            };
-          }),
-        }));
-      },
+export const useCourseStore = create((set, get) => ({
+  courses: loadFromStorage(),
 
-      setProgress: (courseId, progress) => {
-        set(state => ({
-          courses: state.courses.map(c =>
-            c.id === courseId
-              ? { ...c, progress: Math.min(100, Math.max(c.progress, progress)) }
-              : c
-          ),
-        }));
-      },
-    }),
-    { name: 'lms-course-store' }
-  )
-);
+  visitSection: (courseId, sectionId) => {
+    const updated = get().courses.map(c => {
+      if (c.id !== courseId) return c;
+      if (c.visitedSections.includes(sectionId)) return c;
+      const visited = [...c.visitedSections, sectionId];
+      const calculated = Math.round((visited.length / TOTAL_SECTIONS) * 100);
+      return { ...c, visitedSections: visited, progress: Math.max(c.progress, calculated) };
+    });
+    saveToStorage(updated);
+    set({ courses: updated });
+  },
+
+  setProgress: (courseId, progress) => {
+    const updated = get().courses.map(c =>
+      c.id === courseId
+        ? { ...c, progress: Math.min(100, Math.max(c.progress, progress)) }
+        : c
+    );
+    saveToStorage(updated);
+    set({ courses: updated });
+  },
+}));
