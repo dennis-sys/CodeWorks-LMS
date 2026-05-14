@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useCourseStore } from '../store/courseStore';
+import { API_BASE } from '../services/api';
 import {
   BookOpen, Layers, Cpu, Settings, MessageSquare, Trophy,
   CheckCircle2, ArrowLeft, ArrowRight, ChevronRight,
@@ -590,7 +591,7 @@ function AssignmentSection({ session, onComplete }) {
 
     try {
       const token = session?.access_token;
-      const res = await fetch('/api/assignments', {
+      const res = await fetch(`${API_BASE}/api/assignments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, AlertCircle, Trophy, BookOpen, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { API_BASE } from '../services/api';
 
 const gradeColors = {
   A: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -28,7 +29,7 @@ export default function Assignments() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/assignments', {
+      const res = await fetch(`${API_BASE}/api/assignments`, {
         headers: {
           Authorization: `Bearer ${session?.access_token}`,
         },

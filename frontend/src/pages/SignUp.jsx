@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Loader2, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import Logo from '../components/Logo';
+import { API_BASE } from '../services/api';
 
 export default function SignUp() {
   const [form, setForm] = useState({ fullName: '', email: '', password: '', confirmPassword: '' });
@@ -34,7 +35,7 @@ export default function SignUp() {
     setError('');
 
     try {
-      const res = await fetch('/api/auth/signup', {
+      const res = await fetch(`${API_BASE}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

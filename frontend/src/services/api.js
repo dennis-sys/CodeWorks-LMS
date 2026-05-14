@@ -1,5 +1,7 @@
 import { useAuthStore } from '../store/authStore';
 
+export const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export const apiFetch = async (endpoint, options = {}) => {
   const { session } = useAuthStore.getState();
   const headers = {
@@ -9,7 +11,7 @@ export const apiFetch = async (endpoint, options = {}) => {
   };
 
   try {
-    const res = await fetch(`/api${endpoint}`, {
+    const res = await fetch(`${API_BASE}/api${endpoint}`, {
       ...options,
       headers,
     });

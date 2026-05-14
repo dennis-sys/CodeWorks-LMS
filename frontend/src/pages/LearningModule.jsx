@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useCourseStore } from '../store/courseStore';
+import { API_BASE } from '../services/api';
 import {
   BookOpen, Code2, Server, Database, CheckCircle2,
   XCircle, ArrowLeft, ArrowRight, Trophy, RotateCcw,
@@ -338,7 +339,7 @@ function Quiz({ user, session, onComplete }) {
 
     try {
       const token = session?.access_token;
-      const res = await fetch('/api/assignments', {
+      const res = await fetch(`${API_BASE}/api/assignments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
