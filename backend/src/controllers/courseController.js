@@ -1,9 +1,10 @@
-const db = require('../config/db');
+const supabase = require('../config/supabase');
 
 exports.getAllCourses = async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT * FROM courses ORDER BY id');
-    res.status(200).json({ success: true, count: rows.length, data: rows });
+    const { data, error } = await supabase.from('courses').select('*');
+    if (error) throw error;
+    res.status(200).json({ success: true, count: data.length, data });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -11,9 +12,9 @@ exports.getAllCourses = async (req, res) => {
 
 exports.getCourseById = async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT * FROM courses WHERE id = $1', [req.params.id]);
-    if (!rows[0]) return res.status(404).json({ success: false, message: 'Course not found' });
-    res.status(200).json({ success: true, data: rows[0] });
+    const { data, error } = await supabase.from('courses').select('*, enrollments(*)').eq('id', req.params.id).single();
+    if (error || !data) return res.status(404).json({ success: false, message: 'Course not found' });
+    res.status(200).json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

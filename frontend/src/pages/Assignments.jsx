@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, BookOpen, RefreshCw } from 'lucide-react';
+import { CheckCircle, AlertCircle, Trophy, BookOpen, RefreshCw } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
+import { API_BASE } from '../services/api';
 
 const gradeColors = {
   A: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -18,6 +20,7 @@ function formatDate(iso) {
 }
 
 export default function Assignments() {
+  const { session } = useAuthStore();
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -26,7 +29,11 @@ export default function Assignments() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/assignments', { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/api/assignments`, {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
       const data = await res.json();
       if (data.success) {
         setAssignments(data.data);
@@ -41,8 +48,8 @@ export default function Assignments() {
   };
 
   useEffect(() => {
-    fetchAssignments();
-  }, []);
+    if (session) fetchAssignments();
+  }, [session]);
 
   return (
     <div className="space-y-6">

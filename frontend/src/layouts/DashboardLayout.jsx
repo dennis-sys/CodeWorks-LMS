@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Calendar, FileText, Award, Menu, X, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Calendar, FileText, Award, Menu, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import Logo from '../components/Logo';
+import { supabase } from '../services/supabase';
 
 const navItems = [
   { path: '/', label: 'Main Dashboard', icon: LayoutDashboard },
@@ -14,24 +15,23 @@ const navItems = [
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const { user, clearAuth } = useAuthStore();
+  const { user } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      await supabase.auth.signOut();
     } catch (err) {
       console.error('Sign out error:', err);
     } finally {
-      clearAuth();
-      window.location.href = '/api/logout';
+      useAuthStore.getState().clearAuth();
+      navigate('/login', { replace: true });
     }
   };
 
   return (
     <div className="flex min-h-screen bg-surface-light">
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/20 lg:hidden"
@@ -39,7 +39,6 @@ export default function DashboardLayout() {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 flex flex-col glass border-r border-sky-100 transition-all duration-300
           lg:static lg:translate-x-0
@@ -48,7 +47,6 @@ export default function DashboardLayout() {
         `}
       >
         <div className="flex h-full flex-col p-3">
-          {/* Logo + collapse toggle */}
           <div className={`flex items-center mb-8 mt-2 ${collapsed ? 'justify-center' : 'justify-between px-1'}`}>
             {!collapsed && (
               <Link to="/" className="flex items-center gap-3">
@@ -68,7 +66,6 @@ export default function DashboardLayout() {
             </button>
           </div>
 
-          {/* Nav items */}
           <nav className="flex-1 space-y-1">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
@@ -90,7 +87,6 @@ export default function DashboardLayout() {
             })}
           </nav>
 
-          {/* Logout */}
           <button
             onClick={handleLogout}
             title={collapsed ? 'Logout' : undefined}
@@ -104,7 +100,6 @@ export default function DashboardLayout() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-40 glass border-b border-sky-100 px-6 py-4 flex items-center justify-between">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 rounded-md hover:bg-sky-50">
@@ -120,8 +115,8 @@ export default function DashboardLayout() {
                 {user?.full_name?.charAt(0) || 'U'}
               </div>
               <div className="hidden md:block">
-                <p className="text-sm font-semibold">{user?.full_name || 'Student'}</p>
-                <p className="text-xs text-slate-500">{user?.email || ''}</p>
+                <p className="text-sm font-semibold">{user?.full_name}</p>
+                <p className="text-xs text-slate-500">{user?.email}</p>
               </div>
             </div>
           </div>
