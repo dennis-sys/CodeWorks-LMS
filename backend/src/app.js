@@ -6,16 +6,26 @@ const morgan = require('morgan');
 
 const app = express();
 
-const allowedOrigins = process.env.CORS_ORIGIN
+const rawOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
   : ['http://localhost:5000', 'http://localhost:5173'];
+
+function isAllowedOrigin(origin) {
+  for (const allowed of rawOrigins) {
+    if (allowed === '*') return true;
+    if (allowed === origin) return true;
+    if (allowed.startsWith('https://*.')) {
+      const suffix = allowed.slice('https://*.'.length);
+      if (origin.startsWith('https://') && origin.endsWith('.' + suffix)) return true;
+    }
+  }
+  return false;
+}
 
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+    if (isAllowedOrigin(origin)) return callback(null, true);
     callback(new Error(`CORS: origin ${origin} not allowed`));
   },
   credentials: true,

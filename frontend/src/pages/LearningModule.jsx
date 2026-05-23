@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useCourseStore } from '../store/courseStore';
@@ -313,12 +313,41 @@ function getGrade(pct) {
 
 // ── Quiz Component ───────────────────────────────────────────────────────────
 
+const QUIZ_TITLE = 'Intro to Software Development — Module Quiz';
+const QUIZ_DEADLINE = new Date('2025-12-31T23:59:00');
+
+function formatDeadline(date) {
+  return date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 function Quiz({ user, session, onComplete }) {
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [savedToDb, setSavedToDb] = useState(false);
+  const [prevSubmission, setPrevSubmission] = useState(null);
+  const [loadingPrev, setLoadingPrev] = useState(true);
+
+  useEffect(() => {
+    if (!session?.access_token) { setLoadingPrev(false); return; }
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/assignments`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          const prev = data.data.find(a => a.title === QUIZ_TITLE);
+          if (prev) setPrevSubmission(prev);
+        }
+      } catch {
+        // silently ignore — student can still take the quiz
+      } finally {
+        setLoadingPrev(false);
+      }
+    })();
+  }, [session]);
 
   const score = submitted
     ? quizQuestions.reduce((acc, q) => acc + (answers[q.id] === q.correct ? 1 : 0), 0)
@@ -326,6 +355,7 @@ function Quiz({ user, session, onComplete }) {
   const pct = Math.round((score / quizQuestions.length) * 100);
   const grade = getGrade(pct);
   const allAnswered = Object.keys(answers).length === quizQuestions.length;
+  const isPastDeadline = new Date() > QUIZ_DEADLINE;
 
   const handleSubmit = async () => {
     if (!allAnswered) return;
@@ -346,7 +376,7 @@ function Quiz({ user, session, onComplete }) {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          title: 'Intro to Software Development — Module Quiz',
+          title: QUIZ_TITLE,
           course_id: 1,
           score: finalScore,
           total: quizQuestions.length,
@@ -355,7 +385,9 @@ function Quiz({ user, session, onComplete }) {
         }),
       });
       if (res.ok) {
+        const saved = await res.json();
         setSavedToDb(true);
+        setPrevSubmission(saved.data || { title: QUIZ_TITLE, score: finalScore, total: quizQuestions.length, grade: finalGrade.letter, submitted_at: new Date().toISOString() });
         onComplete?.(finalScore, finalPct, finalGrade.letter);
       } else {
         const d = await res.json();
@@ -376,6 +408,14 @@ function Quiz({ user, session, onComplete }) {
     setSubmitError('');
     setSavedToDb(false);
   };
+
+  if (loadingPrev) {
+    return (
+      <div className="flex justify-center py-16">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-sky-500 border-t-transparent" />
+      </div>
+    );
+  }
 
   if (submitted) {
     return (
@@ -438,6 +478,36 @@ function Quiz({ user, session, onComplete }) {
 
   return (
     <div className="space-y-6">
+      {/* Status & Deadline banner */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className={`flex-1 flex items-center gap-3 rounded-xl border px-4 py-3 ${prevSubmission ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+          {prevSubmission
+            ? <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            : <XCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />}
+          <div>
+            <p className={`text-sm font-bold ${prevSubmission ? 'text-emerald-800' : 'text-amber-800'}`}>
+              {prevSubmission ? 'Submitted' : 'Pending'}
+            </p>
+            {prevSubmission && (
+              <p className="text-xs text-emerald-700 mt-0.5">
+                Score: {prevSubmission.score}/{prevSubmission.total} · Grade: {prevSubmission.grade} · {new Date(prevSubmission.submitted_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${isPastDeadline ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'}`}>
+          <span className="text-lg">{isPastDeadline ? '⏰' : '📅'}</span>
+          <div>
+            <p className={`text-xs font-bold ${isPastDeadline ? 'text-red-700' : 'text-slate-700'}`}>
+              {isPastDeadline ? 'Past deadline' : 'Deadline'}
+            </p>
+            <p className={`text-xs mt-0.5 ${isPastDeadline ? 'text-red-600' : 'text-slate-500'}`}>
+              {formatDeadline(QUIZ_DEADLINE)}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-sky-50 border border-sky-200 rounded-xl p-4">
         <p className="text-sm text-sky-800 font-medium">📝 Answer all 10 questions, then click Submit to see your grade. Your result will be saved to Assignments.</p>
       </div>

@@ -69,4 +69,7 @@ build = ["bash", "-c", "cd frontend && npm install && npm run build"]
 [userenv.development]
 
 [userenv.shared]
-CORS_ORIGIN = "https://codeworksacademy.org,http://localhost:5000,http://localhost:5173"
+CORS_ORIGIN = "https://codeworksacademy.org,http://localhost:5000,http://localhost:5001,http://localhost:5173,https://*.janeway.replit.dev,https://*.replit.dev"
+
+[userenv.production]
+VITE_API_URL = "https://codeworks-lms.onrender.com"
