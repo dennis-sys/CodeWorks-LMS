@@ -25,6 +25,18 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true,
       },
+      '/api/login': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/api/callback': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/api/logout': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
     },
   },
 })

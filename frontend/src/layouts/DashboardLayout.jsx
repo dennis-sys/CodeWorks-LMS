@@ -3,7 +3,6 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Calendar, FileText, Award, Menu, X, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import Logo from '../components/Logo';
-import { supabase } from '../services/supabase';
 
 const navItems = [
   { path: '/', label: 'Main Dashboard', icon: LayoutDashboard },
@@ -15,18 +14,18 @@ const navItems = [
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const { user } = useAuthStore();
+  const { user, clearAuth } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
     } catch (err) {
       console.error('Sign out error:', err);
     } finally {
-      useAuthStore.getState().clearAuth();
-      navigate('/login', { replace: true });
+      clearAuth();
+      window.location.href = '/api/logout';
     }
   };
 
@@ -60,7 +59,6 @@ export default function DashboardLayout() {
             {collapsed && (
               <Link to="/" className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-white"><Logo className="w-5 h-5" /></Link>
             )}
-            {/* Collapse button — desktop only */}
             <button
               onClick={() => setCollapsed(v => !v)}
               className="hidden lg:flex items-center justify-center h-7 w-7 rounded-md text-slate-400 hover:bg-sky-50 hover:text-sky-600 transition-all shrink-0"
@@ -122,8 +120,8 @@ export default function DashboardLayout() {
                 {user?.full_name?.charAt(0) || 'U'}
               </div>
               <div className="hidden md:block">
-                <p className="text-sm font-semibold">{user?.full_name}</p>
-                <p className="text-xs text-slate-500">{user?.email}</p>
+                <p className="text-sm font-semibold">{user?.full_name || 'Student'}</p>
+                <p className="text-xs text-slate-500">{user?.email || ''}</p>
               </div>
             </div>
           </div>

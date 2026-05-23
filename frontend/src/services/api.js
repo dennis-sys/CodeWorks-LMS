@@ -1,12 +1,8 @@
-import { useAuthStore } from '../store/authStore';
-
-export const API_BASE = import.meta.env.VITE_API_URL || '';
+export const API_BASE = '';
 
 export const apiFetch = async (endpoint, options = {}) => {
-  const { session } = useAuthStore.getState();
   const headers = {
     'Content-Type': 'application/json',
-    ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
     ...options.headers,
   };
 
@@ -14,6 +10,7 @@ export const apiFetch = async (endpoint, options = {}) => {
     const res = await fetch(`${API_BASE}/api${endpoint}`, {
       ...options,
       headers,
+      credentials: 'include',
     });
     if (!res.ok) throw new Error(`API Error: ${res.status}`);
     return await res.json();

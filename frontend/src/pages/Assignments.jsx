@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, AlertCircle, Trophy, BookOpen, RefreshCw } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
-import { API_BASE } from '../services/api';
+import { CheckCircle, BookOpen, RefreshCw } from 'lucide-react';
 
 const gradeColors = {
   A: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -20,7 +18,6 @@ function formatDate(iso) {
 }
 
 export default function Assignments() {
-  const { session } = useAuthStore();
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -29,11 +26,7 @@ export default function Assignments() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/api/assignments`, {
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
+      const res = await fetch('/api/assignments', { credentials: 'include' });
       const data = await res.json();
       if (data.success) {
         setAssignments(data.data);
@@ -48,8 +41,8 @@ export default function Assignments() {
   };
 
   useEffect(() => {
-    if (session) fetchAssignments();
-  }, [session]);
+    fetchAssignments();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -90,7 +83,6 @@ export default function Assignments() {
 
       {!loading && !error && assignments.length > 0 && (
         <>
-          {/* Summary cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { label: 'Total Submitted', value: assignments.length, icon: '📋' },
@@ -118,7 +110,6 @@ export default function Assignments() {
             ))}
           </div>
 
-          {/* Assignment list */}
           <div className="space-y-4">
             {assignments.map((a) => {
               const pct = Math.round((a.score / a.total) * 100);

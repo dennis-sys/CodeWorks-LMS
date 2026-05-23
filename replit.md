@@ -1,12 +1,13 @@
-# Student LMS Dashboard
+# Codeworks Academy LMS
 
-A full-stack Learning Management System (LMS) for students to manage their learning journey.
+A full-stack Learning Management System (LMS) for students to manage courses, assignments, and their learning journey.
 
 ## Tech Stack
 
 - **Frontend**: React 18 + Vite + Tailwind CSS + Zustand + React Router v6
 - **Backend**: Node.js + Express.js
-- **Database/Auth**: Supabase (PostgreSQL + Auth)
+- **Database**: Replit PostgreSQL (via `pg` package)
+- **Auth**: Replit Auth (OpenID Connect via `openid-client` + `passport`)
 - **Package Manager**: npm
 
 ## Project Structure
@@ -19,16 +20,22 @@ A full-stack Learning Management System (LMS) for students to manage their learn
 - **Frontend workflow**: `cd frontend && npm run dev` (port 5000)
 - **Backend workflow**: `cd backend && npm run dev` (port 3001)
 
-## Required Secrets
+## Auth Flow
 
-The following secrets must be set in Replit Secrets:
+- Login: `/api/login` → Replit OIDC → `/api/callback` → redirects to `/`
+- Logout: `/api/logout`
+- Identity check: `/api/auth/identity` (returns current session user)
 
-- `SUPABASE_URL` — Supabase project URL
-- `SUPABASE_SERVICE_ROLE_KEY` — Backend service role key
-- `VITE_SUPABASE_URL` — Same as SUPABASE_URL (used by frontend)
-- `VITE_SUPABASE_ANON_KEY` — Public anon key (used by frontend)
+## Database Tables
+
+- `users` — linked to Replit user IDs
+- `courses` — course catalog
+- `assignments` — submitted quiz results
+- `enrollments` — user-course progress
+- `sessions` — express-session store
 
 ## User Preferences
 
 - Backend port: 3001
 - Frontend port: 5000
+- No email/password forms — authentication handled entirely by Replit Auth
