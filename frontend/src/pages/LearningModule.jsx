@@ -543,7 +543,7 @@ function OverviewSection() {
           ))}
         </div>
         <p className="text-slate-600 text-sm leading-relaxed">
-          Developers use tools like <strong>VS Code</strong> for editing, <strong>Git</strong> for version control, <strong>npm</strong> for managing packages, and platforms like <strong>Replit</strong> or <strong>Vercel</strong> for deployment.
+          Developers use tools like <strong>VS Code</strong> for editing, <strong>Git</strong> for version control, <strong>npm</strong> for managing packages, and platforms like <strong>Replit</strong>, <strong>Vercel</strong>, or <strong>Netlify</strong> for deployment.
         </p>
       </div>
     </div>
