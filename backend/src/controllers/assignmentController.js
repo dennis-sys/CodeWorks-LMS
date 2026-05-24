@@ -37,6 +37,8 @@ DO $$ BEGIN
 END $$;
 `.trim();
 
+const isUUID = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
 async function tryInsert(payload) {
   const { data, error } = await supabase
     .from('assignments')
@@ -48,7 +50,12 @@ async function tryInsert(payload) {
 
 exports.submitAssignment = async (req, res) => {
   const { title, course_id, score, total, grade, answers } = req.body;
-  const userId = req.user?.id;
+  const rawUserId = req.user?.id;
+  const userId = isUUID(rawUserId) ? rawUserId : null;
+
+  if (!userId) {
+    console.warn('submitAssignment: user_id is not a valid UUID:', rawUserId);
+  }
 
   if (!title || score === undefined || !total || !grade) {
     return res.status(400).json({ success: false, message: 'Missing required fields.' });
@@ -56,13 +63,20 @@ exports.submitAssignment = async (req, res) => {
 
   const submitted_at = new Date().toISOString();
 
-  const payloads = [
-    { user_id: userId, title, course_id: course_id || null, score, total, grade, answers: answers || null, submitted_at },
-    { user_id: userId, title, course_id: course_id || null, score, total, grade, submitted_at },
-    { user_id: userId, title, score, total, grade, submitted_at },
-    { title, score, total, grade, submitted_at },
-    { title, score, grade, submitted_at },
-  ];
+  const payloads = userId
+    ? [
+        { user_id: userId, title, course_id: course_id || null, score, total, grade, answers: answers || null, submitted_at },
+        { user_id: userId, title, course_id: course_id || null, score, total, grade, submitted_at },
+        { user_id: userId, title, score, total, grade, submitted_at },
+        { title, score, total, grade, submitted_at },
+        { title, score, grade, submitted_at },
+      ]
+    : [
+        { title, course_id: course_id || null, score, total, grade, answers: answers || null, submitted_at },
+        { title, course_id: course_id || null, score, total, grade, submitted_at },
+        { title, score, total, grade, submitted_at },
+        { title, score, grade, submitted_at },
+      ];
 
   let lastError = null;
 
