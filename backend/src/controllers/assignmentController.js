@@ -1,5 +1,42 @@
 const supabase = require('../config/supabase');
 
+const MIGRATION_SQL = `
+-- Run this once in your Supabase SQL Editor (dashboard.supabase.com → SQL Editor)
+-- It is safe to run multiple times.
+
+CREATE TABLE IF NOT EXISTS assignments (
+  id          bigserial PRIMARY KEY,
+  user_id     uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  title       text NOT NULL,
+  course_id   integer,
+  score       integer NOT NULL DEFAULT 0,
+  total       integer NOT NULL DEFAULT 0,
+  grade       text NOT NULL DEFAULT 'F',
+  answers     jsonb,
+  submitted_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE assignments ADD COLUMN IF NOT EXISTS user_id     uuid REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE assignments ADD COLUMN IF NOT EXISTS course_id   integer;
+ALTER TABLE assignments ADD COLUMN IF NOT EXISTS score       integer NOT NULL DEFAULT 0;
+ALTER TABLE assignments ADD COLUMN IF NOT EXISTS total       integer NOT NULL DEFAULT 0;
+ALTER TABLE assignments ADD COLUMN IF NOT EXISTS grade       text NOT NULL DEFAULT 'F';
+ALTER TABLE assignments ADD COLUMN IF NOT EXISTS answers     jsonb;
+ALTER TABLE assignments ADD COLUMN IF NOT EXISTS submitted_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE assignments ADD COLUMN IF NOT EXISTS title       text;
+
+ALTER TABLE assignments ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='assignments' AND policyname='Users can view own assignments') THEN
+    CREATE POLICY "Users can view own assignments" ON assignments FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='assignments' AND policyname='Users can insert own assignments') THEN
+    CREATE POLICY "Users can insert own assignments" ON assignments FOR INSERT WITH CHECK (auth.uid() = user_id);
+  END IF;
+END $$;
+`.trim();
+
 async function tryInsert(payload) {
   const { data, error } = await supabase
     .from('assignments')
@@ -43,8 +80,18 @@ exports.submitAssignment = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message || 'Failed to save assignment.' });
   }
 
-  console.error('Assignment submit — all payloads failed. Last error:', lastError?.message);
-  return res.status(500).json({ success: false, message: 'Database schema mismatch. Please set up the assignments table — see server logs for the SQL.' });
+  console.error('=== ASSIGNMENTS TABLE SCHEMA FIX ===');
+  console.error('Last error:', lastError?.message);
+  console.error('Run the following SQL in your Supabase SQL Editor:\n');
+  console.error(MIGRATION_SQL);
+  console.error('====================================');
+
+  return res.status(500).json({
+    success: false,
+    message: 'Database schema mismatch.',
+    fix: 'Run the migration SQL printed in the server console in your Supabase SQL Editor (dashboard.supabase.com → SQL Editor).',
+    sql: MIGRATION_SQL,
+  });
 };
 
 exports.getAssignments = async (req, res) => {
