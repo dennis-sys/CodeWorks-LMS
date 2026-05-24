@@ -68,6 +68,7 @@ exports.submitAssignment = async (req, res) => {
         { user_id: userId, title, course_id: course_id || null, score, total, grade, answers: answers || null, submitted_at },
         { user_id: userId, title, course_id: course_id || null, score, total, grade, submitted_at },
         { user_id: userId, title, score, total, grade, submitted_at },
+        { title, course_id: course_id || null, score, total, grade, submitted_at },
         { title, score, total, grade, submitted_at },
         { title, score, grade, submitted_at },
       ]
@@ -85,12 +86,23 @@ exports.submitAssignment = async (req, res) => {
     if (!error) {
       return res.status(201).json({ success: true, data });
     }
-    const schemaError = error.code === 'PGRST204' || error.code === '42703' || error.message?.includes('column') || error.message?.includes('schema');
-    if (schemaError) {
-      lastError = error;
+    const retryable =
+      error.code === 'PGRST204' ||
+      error.code === '42703' ||
+      error.code === '22P02' ||
+      error.code === '23502' ||
+      error.code === '23503' ||
+      error.message?.includes('column') ||
+      error.message?.includes('schema') ||
+      error.message?.includes('syntax') ||
+      error.message?.includes('uuid') ||
+      error.message?.includes('violates');
+    lastError = error;
+    if (retryable) {
+      console.warn('Assignment submit — retrying with simpler payload. Error:', error.message);
       continue;
     }
-    console.error('Assignment submit error:', error);
+    console.error('Assignment submit — non-retryable error:', error);
     return res.status(500).json({ success: false, message: error.message || 'Failed to save assignment.' });
   }
 
