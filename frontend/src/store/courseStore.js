@@ -1,7 +1,33 @@
 import { create } from 'zustand';
 
-const STORAGE_KEY = 'lms-course-store';
+const STORAGE_KEY    = 'lms-course-store';
+const ACTIVITY_KEY   = 'lms-activity-log';
 const TOTAL_SECTIONS = 6;
+
+// ── Activity log helpers ──────────────────────────────────────────────────────
+// Stores { "YYYY-MM-DD": count } in localStorage so the dashboard
+// can render a real weekly activity bar chart.
+
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);   // "2026-06-25"
+}
+
+export function logActivity() {
+  try {
+    const raw  = localStorage.getItem(ACTIVITY_KEY);
+    const log  = raw ? JSON.parse(raw) : {};
+    const key  = todayKey();
+    log[key]   = (log[key] || 0) + 1;
+    localStorage.setItem(ACTIVITY_KEY, JSON.stringify(log));
+  } catch { /* silent */ }
+}
+
+export function getActivityLog() {
+  try {
+    const raw = localStorage.getItem(ACTIVITY_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
 
 const INITIAL_COURSES = [
   { id: 1, progress: 75, visitedSections: ['overview', 'architecture', 'frontend', 'backend'] },
@@ -43,6 +69,7 @@ export const useCourseStore = create((set, get) => ({
       return { ...c, visitedSections: visited, progress: Math.max(c.progress, calculated) };
     });
     saveToStorage(updated);
+    logActivity();
     set({ courses: updated });
   },
 

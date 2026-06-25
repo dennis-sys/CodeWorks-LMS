@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { PlayCircle } from 'lucide-react';
-import { useCourseStore } from '../store/courseStore';
+import { useCourseStore, getActivityLog } from '../store/courseStore';
 
 const COURSE_META = [
   { id: 1, title: 'Introduction to Software Development', duration: '4 Weeks', instructor: 'Dr. Smith', status: 'Active', image: 'https://images.pexels.com/photos/5380664/pexels-photo-5380664.jpeg' },
@@ -14,13 +13,51 @@ const COURSE_META = [
   { id: 7, title: 'Full Stack Application', duration: '10 Weeks', instructor: 'David Kim', status: 'Not Started', image: 'https://images.pexels.com/photos/32944547/pexels-photo-32944547.jpeg' },
 ];
 
-const chartData = [
-  { name: 'Completed', value: 3, color: '#0ea5e9' },
-  { name: 'In Progress', value: 2, color: '#38bdf8' },
-  { name: 'Upcoming', value: 2, color: '#cbd5e1' },
-];
+const DIST_COLOURS = {
+  Completed:   '#0ea5e9',
+  'In Progress': '#f59e0b',
+  'Not Started': '#cbd5e1',
+};
+
+// Build the last-7-days bar-chart data from the activity log
+function buildWeeklyData() {
+  const log   = getActivityLog();
+  const days  = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const result = [];
+  for (let i = 6; i >= 0; i--) {
+    const d   = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    result.push({ day: days[d.getDay()], sections: log[key] || 0, date: key });
+  }
+  return result;
+}
 
 const courseRoutes = { 1: '/courses/1', 2: '/courses/2', 3: '/courses/3', 4: '/courses/4', 5: '/courses/5', 6: '/courses/6', 7: '/courses/7' };
+
+// Custom bar tooltip
+function ActivityTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  const val = payload[0].value;
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-lg text-xs">
+      <p className="font-bold text-slate-700">{label}</p>
+      <p className="text-sky-600 font-semibold">{val} section{val !== 1 ? 's' : ''} visited</p>
+    </div>
+  );
+}
+
+// Custom pie tooltip
+function DistTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const { name, value } = payload[0];
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-lg text-xs">
+      <p className="font-bold text-slate-700">{name}</p>
+      <p className="text-slate-500">{value} course{value !== 1 ? 's' : ''}</p>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -30,6 +67,20 @@ export default function Dashboard() {
     const stored = storeCourses.find(c => c.id === meta.id);
     return { ...meta, progress: stored?.progress ?? 0 };
   });
+
+  // Derive pie chart slices from live progress values
+  const completed   = courses.filter(c => c.progress === 100).length;
+  const inProgress  = courses.filter(c => c.progress > 0 && c.progress < 100).length;
+  const notStarted  = courses.filter(c => c.progress === 0).length;
+  const distData = [
+    { name: 'Completed',   value: completed,  color: DIST_COLOURS['Completed']   },
+    { name: 'In Progress', value: inProgress, color: DIST_COLOURS['In Progress'] },
+    { name: 'Not Started', value: notStarted, color: DIST_COLOURS['Not Started'] },
+  ].filter(d => d.value > 0);
+
+  const weeklyData    = buildWeeklyData();
+  const totalActivity = weeklyData.reduce((a, d) => a + d.sections, 0);
+  const peakDay       = weeklyData.reduce((a, d) => d.sections > a.sections ? d : a, weeklyData[0]);
 
   return (
     <div className="space-y-8">
@@ -89,29 +140,120 @@ export default function Dashboard() {
 
       {/* Stats & Charts */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="glass rounded-2xl p-6 shadow-soft">
-          <h3 className="font-bold text-slate-700 mb-4">Course Distribution</h3>
-          <div className="h-48 flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={chartData} innerRadius={50} outerRadius={70} paddingAngle={4} dataKey="value">
-                  {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+
+        {/* Course Distribution — live from progress */}
+        <div className="glass rounded-2xl p-6 shadow-soft flex flex-col">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-bold text-slate-700">Course Distribution</h3>
+            <span className="text-xs text-slate-400">{courses.length} total</span>
+          </div>
+          <p className="text-xs text-slate-400 mb-3">Completed vs in-progress vs not started</p>
+
+          <div className="flex items-center gap-4 flex-1 min-h-0">
+            {/* Donut */}
+            <div className="w-32 h-32 flex-shrink-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={distData}
+                    innerRadius={34}
+                    outerRadius={52}
+                    paddingAngle={3}
+                    dataKey="value"
+                    startAngle={90}
+                    endAngle={-270}
+                  >
+                    {distData.map((entry, i) => (
+                      <Cell key={`cell-${i}`} fill={entry.color} strokeWidth={0} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<DistTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Legend + counts */}
+            <div className="flex flex-col gap-2 flex-1">
+              {[
+                { name: 'Completed',   color: DIST_COLOURS['Completed'],   val: completed  },
+                { name: 'In Progress', color: DIST_COLOURS['In Progress'], val: inProgress },
+                { name: 'Not Started', color: DIST_COLOURS['Not Started'], val: notStarted },
+              ].map(item => (
+                <div key={item.name} className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                  <span className="text-xs text-slate-600 flex-1">{item.name}</span>
+                  <span className="text-xs font-bold text-slate-800">{item.val}</span>
+                </div>
+              ))}
+              <div className="mt-1 pt-2 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-xs text-slate-400">Completion rate</span>
+                <span className="text-xs font-black text-sky-600">
+                  {courses.length > 0 ? Math.round((completed / courses.length) * 100) : 0}%
+                </span>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Weekly Activity — from live localStorage log */}
         <div className="md:col-span-2 glass rounded-2xl p-6 shadow-soft">
-          <h3 className="font-bold text-slate-700 mb-4">Weekly Activity</h3>
-          <ResponsiveContainer width="100%" height="160">
-            <BarChart data={[{day:'M',h:3},{day:'T',h:5},{day:'W',h:2},{day:'T',h:7},{day:'F',h:4},{day:'S',h:6},{day:'S',h:1}]}>
-              <XAxis dataKey="day" tick={{fontSize:12}} axisLine={false} tickLine={false} />
-              <Tooltip />
-              <Bar dataKey="h" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={24} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-bold text-slate-700">Weekly Activity</h3>
+            <span className="text-xs text-slate-400">Last 7 days</span>
+          </div>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-sky-500" />
+              <span className="text-xs text-slate-500">
+                <span className="font-bold text-slate-700">{totalActivity}</span> sections visited
+              </span>
+            </div>
+            {totalActivity > 0 && (
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-amber-400" />
+                <span className="text-xs text-slate-500">
+                  Peak: <span className="font-bold text-slate-700">{peakDay.day}</span> ({peakDay.sections})
+                </span>
+              </div>
+            )}
+          </div>
+
+          {totalActivity === 0 ? (
+            <div className="h-32 flex flex-col items-center justify-center gap-2 text-slate-400">
+              <div className="text-3xl">📚</div>
+              <p className="text-sm font-medium">No activity yet this week</p>
+              <p className="text-xs">Start a course to see your trend</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={130}>
+              <BarChart data={weeklyData} barCategoryGap="30%">
+                <XAxis
+                  dataKey="day"
+                  tick={{ fontSize: 11, fill: '#94a3b8' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis hide allowDecimals={false} />
+                <Tooltip content={<ActivityTooltip />} cursor={{ fill: '#f1f5f9', radius: 6 }} />
+                <Bar
+                  dataKey="sections"
+                  radius={[6, 6, 0, 0]}
+                  barSize={28}
+                >
+                  {weeklyData.map((entry, i) => (
+                    <Cell
+                      key={i}
+                      fill={entry.sections === peakDay.sections && entry.sections > 0
+                        ? '#0ea5e9'
+                        : entry.sections > 0 ? '#bae6fd' : '#e2e8f0'}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
+
       </div>
     </div>
   );
