@@ -20,7 +20,7 @@ const chartData = [
   { name: 'Upcoming', value: 2, color: '#cbd5e1' },
 ];
 
-const courseRoutes = { 1: '/courses/1', 2: '/courses/2', 3: '/courses/3' };
+const courseRoutes = { 1: '/courses/1', 2: '/courses/2', 3: '/courses/3', 4: '/courses/4' };
 
 export default function Dashboard() {
   const navigate = useNavigate();

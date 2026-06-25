@@ -12,6 +12,7 @@ import Certificates from './pages/Certificates';
 import LearningModule from './pages/LearningModule';
 import LearningModuleAI from './pages/LearningModuleAI';
 import LearningModuleVibe from './pages/LearningModuleVibe';
+import LearningModuleFrontend from './pages/LearningModuleFrontend';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuthStore();
@@ -76,6 +77,7 @@ function App() {
           <Route path="courses/1" element={<ProtectedRoute><LearningModule /></ProtectedRoute>} />
           <Route path="courses/2" element={<ProtectedRoute><LearningModuleAI /></ProtectedRoute>} />
           <Route path="courses/3" element={<ProtectedRoute><LearningModuleVibe /></ProtectedRoute>} />
+          <Route path="courses/4" element={<ProtectedRoute><LearningModuleFrontend /></ProtectedRoute>} />
         </Route>
       </Routes>
     </Router>
