@@ -1,6 +1,16 @@
 import { useAuthStore } from '../store/authStore';
 
-export const API_BASE = import.meta.env.VITE_API_URL || '';
+const RENDER_BACKEND = 'https://codeworks-lms.onrender.com';
+
+function resolveApiBase() {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return RENDER_BACKEND;
+  }
+  return '';
+}
+
+export const API_BASE = resolveApiBase();
 
 export const apiFetch = async (endpoint, options = {}) => {
   const { session } = useAuthStore.getState();

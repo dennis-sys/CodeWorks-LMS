@@ -5,5 +5,14 @@ compatibility_date = "2024-09-23"
 directory = "./dist"
 not_found_handling = "single-page-application"
 
+# ── Build-time environment variables ──────────────────────────────────────────
+# VITE_* variables must also be added in the Cloudflare Pages dashboard:
+#   Pages → Settings → Environment Variables → Production
+#   VITE_API_URL    = https://codeworks-lms.onrender.com
+#   VITE_SUPABASE_URL         = <your supabase project URL>
+#   VITE_SUPABASE_ANON_KEY    = <your supabase anon key>
+# ──────────────────────────────────────────────────────────────────────────────
+
 [vars]
 NODE_ENV = "production"
+VITE_API_URL = "https://codeworks-lms.onrender.com"

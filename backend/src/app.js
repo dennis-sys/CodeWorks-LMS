@@ -8,7 +8,12 @@ const app = express();
 
 const rawOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
-  : ['http://localhost:5000', 'http://localhost:5173'];
+  : [
+      'http://localhost:5000',
+      'http://localhost:5173',
+      'https://codeworksacademy.org',
+      'https://www.codeworksacademy.org',
+    ];
 
 function isAllowedOrigin(origin) {
   for (const allowed of rawOrigins) {
