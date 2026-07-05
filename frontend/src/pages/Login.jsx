@@ -62,7 +62,7 @@ export default function Login() {
               </span>
             </h1>
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
-              CodeWorks Academy Project pairs structured courses with AI-guided mentorship so that a vibe coder developer can ship a software system using low code technies.
+              CodeWorks Academy Project pairs structured courses with AI-guided mentorship so that a vibecoder developer can ship a software system using low code technology.
             </p>
           </div>
 
