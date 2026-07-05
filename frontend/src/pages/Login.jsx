@@ -70,7 +70,7 @@ export default function Login() {
             {[
               { icon: Brain,   label: 'AI-Powered',    sub: 'Smart guidance'   },
               { icon: Network, label: 'Full Stack',     sub: '7 live courses'   },
-              { icon: Zap,     label: 'Project-Based',  sub: 'Ship real apps'   },
+              { icon: Zap,     label: 'Live Sessions',  sub: 'Ship real apps'   },
             ].map(({ icon: Icon, label, sub }) => (
               <div
                 key={label}
