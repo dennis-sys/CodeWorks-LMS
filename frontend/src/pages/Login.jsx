@@ -49,20 +49,20 @@ export default function Login() {
           <div className="w-9 h-9 rounded-xl bg-sky-500 flex items-center justify-center shadow-lg shadow-sky-500/40">
             <Logo className="w-5 h-5" />
           </div>
-          <span className="text-white font-black text-lg tracking-tight">CodeWorks</span>
+          <span className="text-white font-black text-lg tracking-tight">CodeWorks Academy</span>
         </div>
 
         {/* Bottom info panel */}
         <div className="absolute bottom-0 left-0 right-0 z-10 p-8">
           <div className="mb-5">
             <h1 className="text-4xl font-black text-white leading-tight mb-2">
-              Learn. Build.<br />
+              Learn. Build.Deploy<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-400">
-                Ship real products.
+                Ship real, secure and scalable software products.
               </span>
             </h1>
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
-              CodeWorks Academy pairs structured courses with AI-guided mentorship so every student goes from zero to full-stack developer.
+              CodeWorks Academy Project pairs structured courses with AI-guided mentorship so that a vibe coder developer can ship a software system using low code technies.
             </p>
           </div>
 
