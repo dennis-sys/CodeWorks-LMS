@@ -15,4 +15,4 @@ not_found_handling = "single-page-application"
 
 [vars]
 NODE_ENV = "production"
-VITE_API_URL = "https://codeworks-lms.onrender.com"
+VITE_API_URL = "https://codeworks-lms.onrender.com/api"
