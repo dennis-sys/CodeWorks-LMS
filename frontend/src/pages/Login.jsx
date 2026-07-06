@@ -56,13 +56,13 @@ export default function Login() {
         <div className="absolute bottom-0 left-0 right-0 z-10 p-8">
           <div className="mb-5">
             <h1 className="text-4xl font-black text-white leading-tight mb-2">
-              Learn. Build.Deploy<br />
+              Learn. Build. Deploy<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-400">
                 Ship real, secure and scalable software products.
               </span>
             </h1>
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
-              CodeWorks Academy Project pairs structured courses with AI-guided mentorship so that a vibecoder developer can ship a software system using low code technology.
+              CodeWorks Academy Project pairs structured courses with AI-guided mentorship so that a vibecoder developer can ship software systems using low code technology.
             </p>
           </div>
 
