@@ -77,7 +77,7 @@ export default function SignUp() {
           {[
             { icon: Brain,   label: 'AI-Powered',   sub: 'Smart guidance' },
             { icon: Network, label: 'Full Stack',    sub: '7 live courses' },
-            { icon: Zap,     label: 'Project-Based', sub: 'Ship real apps' },
+            { icon: Zap,     label: 'Live Sessions', sub: 'Engage with experts' },
           ].map(({ icon: Icon, label, sub }) => (
             <div key={label} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3 flex flex-col gap-1">
               <Icon className="w-4 h-4 text-sky-400" />
