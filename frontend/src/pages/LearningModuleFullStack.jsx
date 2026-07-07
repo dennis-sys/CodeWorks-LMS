@@ -1236,7 +1236,7 @@ export default function LearningModuleFullStack() {
             <span className="text-rose-600 font-medium">Full Stack Application</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900">Full Stack Application</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Alex Thompson · 8 Weeks · Module 7 of 7</p>
+          <p className="text-slate-500 text-sm mt-0.5">Eng.Denis · 4 Weeks · Module 7 of 7</p>
         </div>
       </div>
 
