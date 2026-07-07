@@ -1429,7 +1429,7 @@ export default function LearningModuleDatabase() {
             <span className="text-indigo-600 font-medium">Databases</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900">Databases</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Jordan Patel · 6 Weeks · Module 6 of 6</p>
+          <p className="text-slate-500 text-sm mt-0.5">Eng.Denis · 2 Weeks · Module 6 of 6</p>
         </div>
       </div>
 
