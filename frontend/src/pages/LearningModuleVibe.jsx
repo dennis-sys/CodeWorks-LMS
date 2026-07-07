@@ -1008,7 +1008,7 @@ export default function LearningModuleVibe() {
             <span className="text-amber-600 font-medium">Vibe Coding</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900">Vibe Coding</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Alex Chen · 2 Weeks · Module 3 of 6</p>
+          <p className="text-slate-500 text-sm mt-0.5">Eng.Denis · 3 Weeks · Module 3 of 6</p>
         </div>
       </div>
 
