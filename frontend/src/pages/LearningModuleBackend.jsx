@@ -1185,7 +1185,7 @@ export default function LearningModuleBackend() {
             <span className="text-emerald-600 font-medium">Backend Development</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900">Backend Development</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Marcus Rivera · 6 Weeks · Module 5 of 6</p>
+          <p className="text-slate-500 text-sm mt-0.5">Eng.Denis · 6 Weeks · Module 5 of 6</p>
         </div>
       </div>
 
