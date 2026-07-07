@@ -868,7 +868,7 @@ export default function LearningModuleAI() {
             <span className="text-sky-600 font-medium">AI Tools for Software Development</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900">AI Tools for Software Development</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Jane Doe · 3 Weeks · Module 2 of 6</p>
+          <p className="text-slate-500 text-sm mt-0.5">Eng.Denis · 3 Weeks · Module 2 of 6</p>
         </div>
       </div>
 
