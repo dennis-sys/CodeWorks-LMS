@@ -1172,7 +1172,7 @@ export default function LearningModuleFrontend() {
             <span className="text-violet-600 font-medium">Frontend Development</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900">Frontend Development</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Sarah Lee · 6 Weeks · Module 4 of 6</p>
+          <p className="text-slate-500 text-sm mt-0.5">Eng.Denis · 3 Weeks · Module 4 of 6</p>
         </div>
       </div>
 
