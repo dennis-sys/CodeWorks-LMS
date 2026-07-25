@@ -48,6 +48,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/courses', require('./routes/courseRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/assignments', require('./routes/assignmentRoutes'));
+app.use('/api/payments', require('./routes/paymentRoutes'));
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
