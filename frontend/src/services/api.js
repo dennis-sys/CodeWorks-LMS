@@ -4,10 +4,10 @@ const RENDER_BACKEND = 'https://codeworks-lms.onrender.com';
 
 function resolveApiBase() {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    return RENDER_BACKEND;
-  }
-  return '';
+  // In dev mode the Vite proxy forwards /api → localhost:3001, so use a relative base.
+  // In production builds use the deployed Render backend.
+  if (import.meta.env.DEV) return '';
+  return RENDER_BACKEND;
 }
 
 export const API_BASE = resolveApiBase();
