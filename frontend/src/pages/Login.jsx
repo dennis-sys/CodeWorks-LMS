@@ -116,7 +116,7 @@ export default function Login() {
           </div>
 
           <div className="mb-7">
-            <h2 className="text-2xl font-black text-slate-900">Welcome back 👋</h2>
+            <h2 className="text-2xl font-black text-slate-900">Welcome 👋</h2>
             <p className="text-slate-500 text-sm mt-1">Sign in to continue your learning journey.</p>
           </div>
 
