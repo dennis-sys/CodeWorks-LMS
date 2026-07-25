@@ -3,10 +3,11 @@ import { useAuthStore } from '../store/authStore';
 const RENDER_BACKEND = 'https://codeworks-lms.onrender.com';
 
 function resolveApiBase() {
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  // In dev mode the Vite proxy forwards /api → localhost:3001, so use a relative base.
-  // In production builds use the deployed Render backend.
+  // VITE_API_URL explicitly set (even to '' for same-origin Replit deployment)
+  if (import.meta.env.VITE_API_URL !== undefined) return import.meta.env.VITE_API_URL;
+  // Dev mode: Vite proxy forwards /api → localhost:3001
   if (import.meta.env.DEV) return '';
+  // Production build without an explicit URL: use the deployed Render backend
   return RENDER_BACKEND;
 }
 

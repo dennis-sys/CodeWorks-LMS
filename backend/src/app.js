@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const path = require('path');
 
 const app = express();
 
@@ -49,6 +50,16 @@ app.use('/api/courses', require('./routes/courseRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/assignments', require('./routes/assignmentRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
+
+// ── Serve React frontend in production ──────────────────────────────────────
+const FRONTEND_DIST = path.join(__dirname, '../../frontend/dist');
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(FRONTEND_DIST));
+  // SPA fallback — any non-API route returns index.html
+  app.get(/^(?!\/api).*/, (_req, res) => {
+    res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
+  });
+}
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
