@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom';
 import {
   Award, Download, Lock, CheckCircle, Loader2, Trophy,
-  CreditCard, Smartphone, AlertCircle, ShieldCheck, X,
+  CreditCard, Smartphone, AlertCircle, ShieldCheck, X, Phone, Banknote,
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -58,6 +58,11 @@ export default function Certificates() {
   const [verifying,     setVerifying]     = useState(null); // course id being verified
   const [payError,      setPayError]      = useState(null);
   const [paySuccess,    setPaySuccess]    = useState(null); // course id just paid
+  const [mpesaPayment, setMpesaPayment] = useState(null);   // { course, assignment }
+  const [mpesaReference, setMpesaReference] = useState(null);
+  const [mpesaState,    setMpesaState]    = useState('idle'); // idle, requesting, pending, success, failed
+  const [mpesaMessage,  setMpesaMessage]  = useState('');
+  const [mpesaError,    setMpesaError]    = useState('');
 
   const certRef = useRef(null);
 
@@ -164,6 +169,113 @@ export default function Certificates() {
     handler.openIframe();
   }, [paystackReady, userEmail, studentName]);
 
+  /* ── Open the focused M-Pesa prompt ── */
+  const openMpesaPrompt = useCallback((course, assignment) => {
+    setPayError(null);
+    setMpesaError('');
+    setMpesaMessage('');
+    setMpesaReference(null);
+    setMpesaState('idle');
+    setMpesaPayment({ course, assignment });
+  }, []);
+
+  const closeMpesaPrompt = useCallback(() => {
+    setMpesaPayment(null);
+    setMpesaReference(null);
+    setMpesaState('idle');
+    setMpesaMessage('');
+    setMpesaError('');
+  }, []);
+
+  /* ── Send the M-Pesa STK push request ── */
+  const requestMpesa = useCallback(async ({ phone, amount }) => {
+    if (!mpesaPayment) return;
+
+    setMpesaError('');
+    setMpesaState('requesting');
+    try {
+      const response = await apiFetch('/payments/mpesa/request', {
+        method: 'POST',
+        body: JSON.stringify({
+          course_id: mpesaPayment.course.id,
+          phone,
+          amount: Number(amount),
+        }),
+      });
+      setMpesaReference(response.data.reference);
+      setMpesaMessage(response.data.display_text || 'Check your phone and enter your M-Pesa PIN to complete payment.');
+      setMpesaState('pending');
+    } catch {
+      setMpesaState('failed');
+      setMpesaError('We could not send the M-Pesa prompt. Check the number and try again.');
+    }
+  }, [mpesaPayment]);
+
+  /* ── Watch Paystack until the M-Pesa customer finishes or the request expires ── */
+  useEffect(() => {
+    if (!mpesaReference || !mpesaPayment) return undefined;
+
+    let stopped = false;
+    let checking = false;
+
+    const checkStatus = async () => {
+      if (stopped || checking) return;
+      checking = true;
+      try {
+        const response = await apiFetch(
+          `/payments/mpesa/status/${encodeURIComponent(mpesaReference)}?course_id=${mpesaPayment.course.id}`,
+        );
+        if (stopped) return;
+
+        if (response.status === 'success' && response.paid) {
+          setMpesaState('success');
+          setMpesaMessage('Payment confirmed. Your certificate is ready to download.');
+          setPaidCourses(prev => ({
+            ...prev,
+            [mpesaPayment.course.id]: {
+              paid: true,
+              paid_at: new Date().toISOString(),
+              channel: 'mobile_money',
+            },
+          }));
+          setPaySuccess(mpesaPayment.course.id);
+          setTimeout(() => setPaySuccess(null), 4000);
+          setMpesaReference(null);
+        } else if (response.status === 'failed') {
+          setMpesaState('failed');
+          setMpesaMessage(response.message || 'The M-Pesa payment was not completed.');
+          setMpesaReference(null);
+        }
+      } catch (error) {
+        console.error('M-Pesa status check error:', error);
+      } finally {
+        checking = false;
+      }
+    };
+
+    checkStatus();
+    const intervalId = setInterval(checkStatus, 5000);
+    const timeoutId = setTimeout(() => {
+      if (stopped) return;
+      setMpesaState('failed');
+      setMpesaMessage('The M-Pesa request expired. Please start a new payment request.');
+      setMpesaReference(null);
+    }, 180000);
+
+    return () => {
+      stopped = true;
+      clearInterval(intervalId);
+      clearTimeout(timeoutId);
+    };
+  }, [mpesaReference, mpesaPayment]);
+
+  const payWithCardFromPrompt = useCallback(() => {
+    if (!mpesaPayment) return;
+    const { course, assignment } = mpesaPayment;
+    closeMpesaPrompt();
+    openPaystack(course, assignment, null);
+  }, [mpesaPayment, closeMpesaPrompt, openPaystack]);
+
   /* ── Handle download (pay-gated) ── */
   const handleDownload = useCallback((course, assignment) => {
     if (generating) return;
@@ -259,12 +371,24 @@ export default function Certificates() {
                   verifying={verifying === course.id}
                   justPaid={paySuccess === course.id}
                   generating={generating === course.id}
-                  onPayNow={() => openPaystack(course, assignment, null)}
+                  onPayNow={() => openMpesaPrompt(course, assignment)}
                   onDownload={() => handleDownload(course, assignment)}
                 />
               : <LockedCard key={course.id} course={course} />;
           })}
         </div>
+      )}
+
+      {mpesaPayment && (
+        <MpesaPromptModal
+          course={mpesaPayment.course}
+          status={mpesaState}
+          message={mpesaMessage}
+          error={mpesaError}
+          onClose={closeMpesaPrompt}
+          onSubmit={requestMpesa}
+          onPayWithCard={payWithCardFromPrompt}
+        />
       )}
 
       {/* ── Hidden certificate template (captured by html2canvas) ── */}
@@ -279,6 +403,185 @@ export default function Certificates() {
             accentColor={previewData.accentColor}
           />
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ── M-Pesa STK push prompt ── */
+function MpesaPromptModal({ course, status, message, error, onClose, onSubmit, onPayWithCard }) {
+  const [phone, setPhone] = useState('');
+  const [amount, setAmount] = useState(String(CERT_FEE_KES));
+  const [validationError, setValidationError] = useState('');
+  const isBusy = status === 'requesting' || status === 'pending';
+  const isComplete = status === 'success';
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const digits = phone.replace(/\D/g, '');
+    const enteredAmount = Number(amount);
+
+    if (!/^((0\d{9})|(254\d{9}))$/.test(digits)) {
+      setValidationError('Enter a valid Safaricom number, for example 0712345678.');
+      return;
+    }
+    if (!Number.isFinite(enteredAmount) || enteredAmount !== CERT_FEE_KES) {
+      setValidationError(`Enter the certificate fee of KES ${CERT_FEE_KES.toLocaleString()}.`);
+      return;
+    }
+
+    setValidationError('');
+    onSubmit({ phone, amount: enteredAmount });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" role="presentation">
+      <div
+        className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mpesa-payment-title"
+      >
+        <div className="flex items-start justify-between bg-gradient-to-r from-emerald-600 to-green-500 px-6 py-5 text-white">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15">
+              <Smartphone className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-100">Certificate payment</p>
+              <h2 id="mpesa-payment-title" className="text-xl font-black">Pay with M-Pesa</h2>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-white/80 transition hover:bg-white/15 hover:text-white"
+            aria-label="Close M-Pesa payment"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="space-y-5 p-6">
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+            <p className="text-sm font-bold text-emerald-900">{course.title} certificate</p>
+            <p className="mt-1 text-xs leading-relaxed text-emerald-700">
+              Enter your Safaricom number and we will send an M-Pesa payment prompt to your phone.
+            </p>
+          </div>
+
+          {status === 'pending' ? (
+            <div className="space-y-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <div className="flex items-start gap-3">
+                <Loader2 className="mt-0.5 h-5 w-5 flex-shrink-0 animate-spin text-amber-600" />
+                <div>
+                  <p className="text-sm font-bold text-amber-900">Check your phone</p>
+                  <p className="mt-1 text-xs leading-relaxed text-amber-800">
+                    {message || 'A payment prompt was sent to your M-Pesa number. Enter your PIN to authorize KES 5,000.'}
+                  </p>
+                </div>
+              </div>
+              <p className="text-center text-xs font-semibold text-amber-700">Waiting for payment confirmation…</p>
+            </div>
+          ) : status === 'success' ? (
+            <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">
+              <ShieldCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
+              <div>
+                <p className="text-sm font-bold">Payment successful</p>
+                <p className="mt-1 text-xs">{message || 'Your certificate is ready to download.'}</p>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="mpesa-phone" className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-600">
+                  <Phone className="h-3.5 w-3.5 text-emerald-600" /> Safaricom M-Pesa phone number
+                </label>
+                <input
+                  id="mpesa-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={(event) => { setPhone(event.target.value); setValidationError(''); }}
+                  placeholder="0712 345 678"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                  disabled={isBusy}
+                  required
+                />
+                <p className="mt-1.5 text-xs text-slate-400">Use a number registered on Safaricom M-Pesa.</p>
+              </div>
+
+              <div>
+                <label htmlFor="mpesa-amount" className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-600">
+                  <Banknote className="h-3.5 w-3.5 text-emerald-600" /> Amount (KES)
+                </label>
+                <input
+                  id="mpesa-amount"
+                  type="number"
+                  inputMode="numeric"
+                  min={CERT_FEE_KES}
+                  step="1"
+                  value={amount}
+                  onChange={(event) => { setAmount(event.target.value); setValidationError(''); }}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                  disabled={isBusy}
+                  required
+                />
+                <p className="mt-1.5 text-xs text-slate-400">Certificate fee: KES {CERT_FEE_KES.toLocaleString()}</p>
+              </div>
+
+              {(validationError || error || (status === 'failed' && message)) && (
+                <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
+                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  <span>{validationError || error || message}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isBusy}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 font-bold text-white shadow-md transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {status === 'requesting' ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Sending prompt…</>
+                ) : (
+                  <><Smartphone className="h-4 w-4" /> Request Now</>
+                )}
+              </button>
+            </form>
+          )}
+
+          {isComplete ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full rounded-xl bg-slate-900 py-3 font-bold text-white transition hover:bg-slate-800"
+            >
+              Done
+            </button>
+          ) : !isBusy ? (
+            <button
+              type="button"
+              onClick={onPayWithCard}
+              className="w-full rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+            >
+              Pay with Visa / Mastercard instead
+            </button>
+          ) : null}
+
+          <p className="text-center text-[11px] leading-relaxed text-slate-400">
+            You will receive a Safaricom prompt. Enter your M-Pesa PIN only on your phone, never in this form.
+          </p>
+        </div>
       </div>
     </div>
   );
