@@ -19,7 +19,7 @@ const CERT_COURSES = [
 ];
 
 const PASS_PCT      = 75;
-const CERT_FEE_KES  = 5000;
+const CERT_FEE_KES  = 500;
 const CERT_FEE_KOBO = CERT_FEE_KES * 100; // Paystack uses kobo (lowest unit)
 
 function fmtDate(iso) {
@@ -485,7 +485,7 @@ function MpesaPromptModal({ course, status, message, error, onClose, onSubmit, o
                 <div>
                   <p className="text-sm font-bold text-amber-900">Check your phone</p>
                   <p className="mt-1 text-xs leading-relaxed text-amber-800">
-                    {message || 'A payment prompt was sent to your M-Pesa number. Enter your PIN to authorize KES 5,000.'}
+                    {message || `A payment prompt was sent to your M-Pesa number. Enter your PIN to authorize KES ${CERT_FEE_KES.toLocaleString()}.`}
                   </p>
                 </div>
               </div>
@@ -664,7 +664,7 @@ function EarnedCard({ course, assignment, studentName, isPaid, paying, verifying
               </div>
               <div className="flex items-center gap-2 text-sm text-amber-700">
                 <CreditCard className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                <span>Certificate fee: <strong>KES 5,000</strong></span>
+                <span>Certificate fee: <strong>KES {CERT_FEE_KES.toLocaleString()}</strong></span>
               </div>
             </div>
 
@@ -690,7 +690,7 @@ function EarnedCard({ course, assignment, studentName, isPaid, paying, verifying
               ) : paying ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Opening payment…</>
               ) : (
-                <><CreditCard className="w-4 h-4" /> Pay Now — KES 5,000</>
+                <><CreditCard className="w-4 h-4" /> Pay Now — KES {CERT_FEE_KES.toLocaleString()}</>
               )}
             </button>
           </div>

@@ -1,7 +1,7 @@
 const supabase = require('../config/supabase');
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
-const CERT_AMOUNT = 500000; // 5,000 KES in kobo (Paystack lowest unit)
+const CERT_AMOUNT = 50000; // 500 KES in kobo (Paystack lowest unit)
 const CURRENCY = 'KES';
 const CERT_AMOUNT_KES = CERT_AMOUNT / 100;
 
