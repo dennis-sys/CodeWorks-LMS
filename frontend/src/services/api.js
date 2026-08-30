@@ -2,12 +2,22 @@ import { useAuthStore } from '../store/authStore';
 
 const RENDER_BACKEND = 'https://codeworks-lms.onrender.com';
 
+function normalizeApiBase(value) {
+  return value.replace(/\/+$/, '').replace(/\/api$/, '');
+}
+
 function resolveApiBase() {
-  // VITE_API_URL explicitly set (even to '' for same-origin Replit deployment)
-  if (import.meta.env.VITE_API_URL !== undefined) return import.meta.env.VITE_API_URL;
-  // Dev mode: Vite proxy forwards /api → localhost:3001
+  const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+  if (configuredApiUrl) return normalizeApiBase(configuredApiUrl);
+
+  // Vite proxy forwards /api → localhost:3001 during development.
   if (import.meta.env.DEV) return '';
-  // Production build without an explicit URL: use the deployed Render backend
+
+  // Replit production serves the frontend and API from the same Express app.
+  // Separate static hosts (Netlify, Cloudflare Pages, etc.) must use Render.
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  if (hostname.endsWith('.replit.dev') || hostname.endsWith('.replit.app')) return '';
+
   return RENDER_BACKEND;
 }
 
@@ -26,8 +36,14 @@ export const apiFetch = async (endpoint, options = {}) => {
       ...options,
       headers,
     });
-    if (!res.ok) throw new Error(`API Error: ${res.status}`);
-    return await res.json();
+    const payload = await res.json().catch(() => null);
+    if (!res.ok) {
+      const error = new Error(payload?.message || `API Error: ${res.status}`);
+      error.status = res.status;
+      error.payload = payload;
+      throw error;
+    }
+    return payload;
   } catch (err) {
     console.error('API Fetch Error:', err);
     throw err;

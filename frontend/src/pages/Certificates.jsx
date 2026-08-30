@@ -205,9 +205,9 @@ export default function Certificates() {
       setMpesaReference(response.data.reference);
       setMpesaMessage(response.data.display_text || 'Check your phone and enter your M-Pesa PIN to complete payment.');
       setMpesaState('pending');
-    } catch {
+    } catch (error) {
       setMpesaState('failed');
-      setMpesaError('We could not send the M-Pesa prompt. Check the number and try again.');
+      setMpesaError(error?.message || 'We could not send the M-Pesa prompt. Check the number and try again.');
     }
   }, [mpesaPayment]);
 
