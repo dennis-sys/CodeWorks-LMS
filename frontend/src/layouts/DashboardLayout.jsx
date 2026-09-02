@@ -85,18 +85,18 @@ export default function DashboardLayout() {
                 </Link>
               );
             })}
-          </nav>
 
-          <button
-            onClick={handleLogout}
-            title={collapsed ? 'Logout' : undefined}
-            className={`mt-auto flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-red-500 hover:bg-red-50 transition-all
-              ${collapsed ? 'justify-center' : ''}
-            `}
-          >
-            <LogOut className="h-5 w-5 shrink-0" />
-            {!collapsed && <span>Logout</span>}
-          </button>
+            <button
+              onClick={handleLogout}
+              title={collapsed ? 'Logout' : undefined}
+              className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-red-500 hover:bg-red-50 transition-all
+                ${collapsed ? 'justify-center' : ''}
+              `}
+            >
+              <LogOut className="h-5 w-5 shrink-0" />
+              {!collapsed && <span>Logout</span>}
+            </button>
+          </nav>
         </div>
       </aside>
 
