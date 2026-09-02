@@ -22,8 +22,49 @@ const PASS_PCT      = 75;
 const CERT_FEE_KES  = 500;
 const CERT_FEE_KOBO = CERT_FEE_KES * 100; // Paystack uses kobo (lowest unit)
 
-function fmtDate(iso) {
-  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+function formatOrdinal(day) {
+  if (day % 100 >= 11 && day % 100 <= 13) return `${day}th`;
+  return `${day}${({ 1: 'st', 2: 'nd', 3: 'rd' })[day % 10] || 'th'}`;
+}
+
+function formatAwardedDate(date) {
+  const month = date.toLocaleDateString('en-US', { month: 'long' });
+  return `Awarded this ${formatOrdinal(date.getDate())} day of ${month}, ${date.getFullYear()}`;
+}
+
+async function createCertificateId({ ownerId, courseId, studentName, issuedAt }) {
+  const issueDate = [
+    issuedAt.getFullYear(),
+    String(issuedAt.getMonth() + 1).padStart(2, '0'),
+    String(issuedAt.getDate()).padStart(2, '0'),
+  ].join('-');
+  const payload = [
+    'CodeWorks Academy Certificate',
+    'certificate-id-v1',
+    ownerId,
+    courseId,
+    studentName.trim(),
+    issueDate,
+  ].join('|');
+
+  if (window.crypto?.subtle) {
+    const digest = await window.crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(payload),
+    );
+    const bytes = Array.from(new Uint8Array(digest));
+    const hash = bytes.map(byte => byte.toString(16).padStart(2, '0')).join('');
+    return `CW-${issueDate.replace(/-/g, '')}-${hash.slice(0, 20).toUpperCase()}`;
+  }
+
+  // The browser supports Web Crypto in production; this fallback keeps the
+  // download usable in older preview environments.
+  let hash = 2166136261;
+  for (const character of payload) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `CW-${issueDate.replace(/-/g, '')}-${(hash >>> 0).toString(16).padStart(8, '0').toUpperCase()}`;
 }
 
 /* ── Load Paystack script once ── */
@@ -44,8 +85,9 @@ export default function Certificates() {
   const user    = useAuthStore(s => s.user);
   const session = useAuthStore(s => s.session);
 
-  const studentName = user?.full_name || user?.email?.split('@')[0] || 'Student';
+  const studentName = user?.full_name?.trim() || 'Student';
   const userEmail   = user?.email || '';
+  const ownerId     = user?.id || session?.user?.id || userEmail || 'unknown-owner';
 
   const paystackReady = usePaystackScript();
 
@@ -114,6 +156,28 @@ export default function Certificates() {
     return () => clearTimeout(timer);
   }, [previewData]);
 
+  const prepareCertificateDownload = useCallback(async (course, assignment) => {
+    setGenerating(course.id);
+    const issuedAt = new Date();
+    try {
+      const certificateId = await createCertificateId({
+        ownerId,
+        courseId: course.id,
+        studentName,
+        issuedAt,
+      });
+      setPreviewData({
+        courseTitle: course.title,
+        dateStr: formatAwardedDate(issuedAt),
+        certificateId,
+      });
+    } catch (error) {
+      console.error('Certificate ID generation error:', error);
+      setGenerating(null);
+      setPayError('Could not prepare your certificate. Please try again.');
+    }
+  }, [ownerId, studentName]);
+
   /* ── Open Paystack popup ── */
   const openPaystack = useCallback((course, assignment, onPaidCallback) => {
     if (!paystackReady || !window.PaystackPop) {
@@ -154,7 +218,7 @@ export default function Certificates() {
           }));
           setPaySuccess(course.id);
           setTimeout(() => setPaySuccess(null), 4000);
-          onPaidCallback?.();
+          await onPaidCallback?.();
         } catch {
           setPayError('Payment was received but verification failed. Please contact support.');
         } finally {
@@ -281,26 +345,11 @@ export default function Certificates() {
     if (generating) return;
     const isPaid = paidCourses[course.id]?.paid;
     if (!isPaid) {
-      openPaystack(course, assignment, () => {
-        // After payment, trigger download
-        setGenerating(course.id);
-        setPreviewData({
-          courseTitle: course.title,
-          accentColor: course.accentColor,
-          dateStr:     fmtDate(assignment.submitted_at),
-          pct:         assignment.pct,
-        });
-      });
+      openPaystack(course, assignment, () => prepareCertificateDownload(course, assignment));
       return;
     }
-    setGenerating(course.id);
-    setPreviewData({
-      courseTitle: course.title,
-      accentColor: course.accentColor,
-      dateStr:     fmtDate(assignment.submitted_at),
-      pct:         assignment.pct,
-    });
-  }, [generating, paidCourses, openPaystack]);
+    prepareCertificateDownload(course, assignment);
+  }, [generating, paidCourses, openPaystack, prepareCertificateDownload]);
 
   const total   = CERT_COURSES.length;
   const counted = Object.keys(earned).length;
@@ -397,10 +446,8 @@ export default function Certificates() {
           <CertificateTemplate
             ref={certRef}
             studentName={studentName}
-            courseTitle={previewData.courseTitle}
             dateStr={previewData.dateStr}
-            pct={previewData.pct}
-            accentColor={previewData.accentColor}
+            certificateId={previewData.certificateId}
           />
         )}
       </div>
