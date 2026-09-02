@@ -22,6 +22,14 @@ const PASS_PCT      = 75;
 const CERT_FEE_KES  = 500;
 const CERT_FEE_KOBO = CERT_FEE_KES * 100; // Paystack uses kobo (lowest unit)
 
+function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
 function formatOrdinal(day) {
   if (day % 100 >= 11 && day % 100 <= 13) return `${day}th`;
   return `${day}${({ 1: 'st', 2: 'nd', 3: 'rd' })[day % 10] || 'th'}`;
