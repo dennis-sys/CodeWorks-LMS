@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../store/authStore';
 import { Loader2, Brain, Cpu, Network, Zap } from 'lucide-react';
 import Logo from '../components/Logo';
 import NeuralNet from '../components/NeuralNet';
+import AuthLandingPanel from '../components/AuthLandingPanel';
 
 export default function Login() {
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState('');
+  const location = useLocation();
   const navigate = useNavigate();
+  const [showMobileAuth, setShowMobileAuth] = useState(() => Boolean(location.state?.showAuth));
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -85,14 +88,33 @@ export default function Login() {
         </div>
       </div>
 
+      {!showMobileAuth && (
+        <div className="lg:hidden">
+          <AuthLandingPanel
+            onSignIn={() => setShowMobileAuth(true)}
+            onCreateAccount={() => navigate('/signup', { state: { showAuth: true } })}
+          />
+        </div>
+      )}
+
       {/* ── RIGHT — Auth Panel ── */}
-      <div className="flex-1 lg:w-1/2 flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-white to-sky-50 p-6 sm:p-10 relative overflow-hidden">
+      <div className={`${showMobileAuth ? 'flex' : 'hidden'} lg:flex flex-1 lg:w-1/2 flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-white to-sky-50 p-6 sm:p-10 relative overflow-hidden`}>
 
         {/* Soft background blob */}
         <div className="absolute -top-32 -right-32 w-96 h-96 bg-sky-100 rounded-full blur-3xl opacity-50 pointer-events-none" />
         <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-indigo-100 rounded-full blur-3xl opacity-40 pointer-events-none" />
 
         <div className="relative w-full max-w-md">
+
+          {showMobileAuth && (
+            <button
+              type="button"
+              onClick={() => setShowMobileAuth(false)}
+              className="mb-5 text-sm font-semibold text-slate-500 hover:text-sky-600 lg:hidden"
+            >
+              ← Back to landing
+            </button>
+          )}
 
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2 justify-center mb-8">
@@ -109,6 +131,7 @@ export default function Login() {
             </span>
             <Link
               to="/signup"
+              state={{ showAuth: true }}
               className="flex-1 text-center py-2.5 rounded-xl text-slate-500 text-sm font-semibold hover:text-slate-700 transition-colors"
             >
               Create Account
@@ -175,7 +198,7 @@ export default function Login() {
 
           <p className="text-center text-sm text-slate-500 mt-6">
             New to CodeWorks?{' '}
-            <Link to="/signup" className="text-sky-600 hover:underline font-semibold">
+            <Link to="/signup" state={{ showAuth: true }} className="text-sky-600 hover:underline font-semibold">
               Create a free account
             </Link>
           </p>
