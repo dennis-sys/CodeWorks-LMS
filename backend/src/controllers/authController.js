@@ -13,7 +13,7 @@ exports.signUp = async (req, res) => {
   try {
     // Use the regular signup flow so Supabase sends its confirmation email
     // through the SMTP provider configured in the project settings.
-    const { data: userData, error: createError } = await supabase.auth.signUp({
+    const { data: userData, error: createError } = await supabase.publicAuth.auth.signUp({
       email: email.trim(),
       password,
       options: {
@@ -22,6 +22,15 @@ exports.signUp = async (req, res) => {
     });
 
     if (createError) {
+      if (/confirmation email/i.test(createError.message || '')) {
+        if (userData?.user?.id) {
+          await supabase.auth.admin.deleteUser(userData.user.id);
+        }
+        return res.status(502).json({
+          success: false,
+          message: 'We could not send the confirmation email. Please verify the Supabase custom SMTP settings and try again.',
+        });
+      }
       if (createError.message?.includes('already been registered') || createError.message?.includes('already registered')) {
         return res.status(409).json({ success: false, message: 'An account with this email already exists. Please sign in.' });
       }
