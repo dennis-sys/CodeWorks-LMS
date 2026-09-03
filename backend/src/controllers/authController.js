@@ -11,10 +11,14 @@ exports.signUp = async (req, res) => {
   }
 
   try {
-    const { data: userData, error: createError } = await supabase.auth.admin.createUser({
-      email,
+    // Use the regular signup flow so Supabase sends its confirmation email
+    // through the SMTP provider configured in the project settings.
+    const { data: userData, error: createError } = await supabase.auth.signUp({
+      email: email.trim(),
       password,
-      email_confirm: true,
+      options: {
+        data: { full_name: fullName.trim() },
+      },
     });
 
     if (createError) {
@@ -36,9 +40,16 @@ exports.signUp = async (req, res) => {
         { onConflict: 'email' }
       );
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      // Do not leave an auth account behind when the profile cannot be saved.
+      await supabase.auth.admin.deleteUser(userData.user.id);
+      throw profileError;
+    }
 
-    return res.status(201).json({ success: true, message: 'Account created successfully.' });
+    return res.status(201).json({
+      success: true,
+      message: 'Account created. Check your email for the confirmation link.',
+    });
   } catch (err) {
     console.error('Sign up error:', err);
     return res.status(500).json({ success: false, message: err.message || 'Sign up failed.' });
