@@ -27,7 +27,7 @@ const CERT_COURSES = [
 ];
 
 const PASS_PCT      = 75;
-const CERT_FEE_KES  = 500;
+const CERT_FEE_KES  = 50;
 const CERT_FEE_KOBO = CERT_FEE_KES * 100; // Paystack uses kobo (lowest unit)
 
 function fmtDate(iso) {
