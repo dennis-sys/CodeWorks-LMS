@@ -53,7 +53,11 @@ const CERT_COURSES = [
 
 const PASS_PCT      = 75;
 const CERT_FEE_KES  = 1000;
-const CERT_FEE_KOBO = CERT_FEE_KES * 100; // Paystack uses kobo (lowest unit)
+const FULL_STACK_CERT_FEE_KES = 5000;
+
+function getCertificateFeeKes(course) {
+  return course?.id === 7 ? FULL_STACK_CERT_FEE_KES : CERT_FEE_KES;
+}
 
 function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -230,11 +234,12 @@ export default function Certificates() {
     setPayingCourse(course.id);
 
     const reference = `CW-${course.id}-${Date.now()}`;
+    const certificateFeeKes = getCertificateFeeKes(course);
 
     const handler = window.PaystackPop.setup({
       key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
       email: userEmail,
-      amount: CERT_FEE_KOBO,
+      amount: certificateFeeKes * 100, // Paystack uses kobo (lowest unit)
       currency: 'KES',
       ref: reference,
       channels: ['card', 'mobile_money'],   // card = Visa/Mastercard, mobile_money = M-Pesa
@@ -404,8 +409,7 @@ export default function Certificates() {
         <div>
           <h1 className="text-3xl font-black tracking-tight text-slate-900">Certificates 🎓</h1>
           <p className="text-slate-500 mt-1 text-sm">
-            Score <span className="font-semibold text-sky-600">75%+</span> on a module assignment, then pay the{' '}
-            <span className="font-semibold text-sky-600">KES {CERT_FEE_KES.toLocaleString()}</span> certificate fee to download your personalised certificate.
+            Score <span className="font-semibold text-sky-600">75%+</span> on a module assignment, then pay the applicable certificate fee to download your personalised certificate.
           </p>
         </div>
 
@@ -462,7 +466,8 @@ export default function Certificates() {
                   verifying={verifying === course.id}
                   justPaid={paySuccess === course.id}
                   generating={generating === course.id}
-                   certificateLabel={course.certificateLabel}
+                  certificateLabel={course.certificateLabel}
+                  certificateFeeKes={getCertificateFeeKes(course)}
                   onPayNow={() => openMpesaPrompt(course, assignment)}
                   onDownload={() => handleDownload(course, assignment)}
                 />
@@ -478,6 +483,7 @@ export default function Certificates() {
       {mpesaPayment && (
         <MpesaPromptModal
           course={mpesaPayment.course}
+          feeKes={getCertificateFeeKes(mpesaPayment.course)}
           status={mpesaState}
           message={mpesaMessage}
           error={mpesaError}
@@ -504,9 +510,9 @@ export default function Certificates() {
 }
 
 /* ── M-Pesa STK push prompt ── */
-function MpesaPromptModal({ course, status, message, error, onClose, onSubmit, onPayWithCard }) {
+function MpesaPromptModal({ course, feeKes, status, message, error, onClose, onSubmit, onPayWithCard }) {
   const [phone, setPhone] = useState('');
-  const [amount, setAmount] = useState(String(CERT_FEE_KES));
+  const [amount, setAmount] = useState(String(feeKes));
   const [validationError, setValidationError] = useState('');
   const isBusy = status === 'requesting' || status === 'pending';
   const isComplete = status === 'success';
@@ -528,8 +534,8 @@ function MpesaPromptModal({ course, status, message, error, onClose, onSubmit, o
       setValidationError('Enter a valid Safaricom number, for example 0712345678.');
       return;
     }
-    if (!Number.isFinite(enteredAmount) || enteredAmount !== CERT_FEE_KES) {
-      setValidationError(`Enter the certificate fee of KES ${CERT_FEE_KES.toLocaleString()}.`);
+    if (!Number.isFinite(enteredAmount) || enteredAmount !== feeKes) {
+      setValidationError(`Enter the certificate fee of KES ${feeKes.toLocaleString()}.`);
       return;
     }
 
@@ -580,7 +586,7 @@ function MpesaPromptModal({ course, status, message, error, onClose, onSubmit, o
                 <div>
                   <p className="text-sm font-bold text-amber-900">Check your phone</p>
                   <p className="mt-1 text-xs leading-relaxed text-amber-800">
-                    {message || `A payment prompt was sent to your M-Pesa number. Enter your PIN to authorize KES ${CERT_FEE_KES.toLocaleString()}.`}
+                    {message || `A payment prompt was sent to your M-Pesa number. Enter your PIN to authorize KES ${feeKes.toLocaleString()}.`}
                   </p>
                 </div>
               </div>
@@ -623,7 +629,7 @@ function MpesaPromptModal({ course, status, message, error, onClose, onSubmit, o
                   id="mpesa-amount"
                   type="number"
                   inputMode="numeric"
-                  min={CERT_FEE_KES}
+                   min={feeKes}
                   step="1"
                   value={amount}
                   onChange={(event) => { setAmount(event.target.value); setValidationError(''); }}
@@ -631,7 +637,7 @@ function MpesaPromptModal({ course, status, message, error, onClose, onSubmit, o
                   disabled={isBusy}
                   required
                 />
-                <p className="mt-1.5 text-xs text-slate-400">Certificate fee: KES {CERT_FEE_KES.toLocaleString()}</p>
+                 <p className="mt-1.5 text-xs text-slate-400">Certificate fee: KES {feeKes.toLocaleString()}</p>
               </div>
 
               {(validationError || error || (status === 'failed' && message)) && (
@@ -683,7 +689,7 @@ function MpesaPromptModal({ course, status, message, error, onClose, onSubmit, o
 }
 
 /* ── Earned certificate card ── */
-function EarnedCard({ course, assignment, studentName, isPaid, paying, verifying, justPaid, generating, certificateLabel, onPayNow, onDownload }) {
+function EarnedCard({ course, assignment, studentName, isPaid, paying, verifying, justPaid, generating, certificateLabel, certificateFeeKes, onPayNow, onDownload }) {
   const dateStr = fmtDate(assignment.submitted_at);
 
   return (
@@ -761,7 +767,7 @@ function EarnedCard({ course, assignment, studentName, isPaid, paying, verifying
               </div>
               <div className="flex items-center gap-2 text-sm text-amber-700">
                 <CreditCard className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                <span>Certificate fee: <strong>KES {CERT_FEE_KES.toLocaleString()}</strong></span>
+                <span>Certificate fee: <strong>KES {certificateFeeKes.toLocaleString()}</strong></span>
               </div>
             </div>
 
@@ -787,7 +793,7 @@ function EarnedCard({ course, assignment, studentName, isPaid, paying, verifying
               ) : paying ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Opening payment…</>
               ) : (
-                <><CreditCard className="w-4 h-4" /> Pay Now — KES {CERT_FEE_KES.toLocaleString()}</>
+                <><CreditCard className="w-4 h-4" /> Pay Now — KES {certificateFeeKes.toLocaleString()}</>
               )}
             </button>
           </div>

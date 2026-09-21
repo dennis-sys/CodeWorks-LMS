@@ -2,8 +2,12 @@ const supabase = require('../config/supabase');
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
 const CERT_AMOUNT = 100000; // 1,000 KES in kobo (Paystack lowest unit)
+const FULL_STACK_CERT_AMOUNT = 500000; // 5,000 KES in kobo (Paystack lowest unit)
 const CURRENCY = 'KES';
-const CERT_AMOUNT_KES = CERT_AMOUNT / 100;
+
+function getCertificateAmount(courseId) {
+  return Number(courseId) === 7 ? FULL_STACK_CERT_AMOUNT : CERT_AMOUNT;
+}
 
 const MIGRATION_SQL = `
 -- Run once in Supabase SQL Editor → dashboard.supabase.com → SQL Editor
@@ -67,7 +71,8 @@ async function fetchPaystackTransaction(reference) {
 }
 
 async function recordSuccessfulPayment({ userId, courseId, reference, payment }) {
-  if (payment.currency !== CURRENCY || payment.amount < CERT_AMOUNT) {
+  const certificateAmount = getCertificateAmount(courseId);
+  if (payment.currency !== CURRENCY || payment.amount < certificateAmount) {
     const error = new Error('Payment amount or currency mismatch');
     error.statusCode = 402;
     throw error;
@@ -101,6 +106,8 @@ exports.requestMpesaPayment = async (req, res) => {
   const { course_id, phone, amount } = req.body;
   const amountKes = Number(amount);
   const normalizedPhone = normalizeKenyanPhone(phone);
+  const certificateAmount = getCertificateAmount(course_id);
+  const certificateAmountKes = certificateAmount / 100;
 
   if (!course_id || !Number.isInteger(Number(course_id))) {
     return res.status(400).json({ success: false, message: 'A valid course_id is required' });
@@ -111,10 +118,10 @@ exports.requestMpesaPayment = async (req, res) => {
       message: 'Enter a valid Kenyan Safaricom number, for example 0712345678',
     });
   }
-  if (!Number.isFinite(amountKes) || amountKes !== CERT_AMOUNT_KES) {
+  if (!Number.isFinite(amountKes) || amountKes !== certificateAmountKes) {
     return res.status(400).json({
       success: false,
-      message: `The certificate fee must be KES ${CERT_AMOUNT_KES.toLocaleString()}`,
+      message: `The certificate fee must be KES ${certificateAmountKes.toLocaleString()}`,
     });
   }
   if (!req.user?.email) {
@@ -134,7 +141,7 @@ exports.requestMpesaPayment = async (req, res) => {
       },
       body: JSON.stringify({
         email: req.user.email,
-        amount: CERT_AMOUNT,
+        amount: certificateAmount,
         currency: CURRENCY,
         mobile_money: {
           phone: normalizedPhone,
