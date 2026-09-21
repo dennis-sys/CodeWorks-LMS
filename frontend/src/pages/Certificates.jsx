@@ -30,7 +30,15 @@ const CERT_COURSES = [
     path: '/courses/5',
     templateSrc: '/certificate-backend-development-template.png',
   },
-  { id: 6, title: 'Database Engineering',   accentColor: '#6366f1', icon: '🗄️', tagline: 'SQL, Supabase & data modelling',   path: '/courses/6' },
+  {
+    id: 6,
+    title: 'Database Engineering',
+    accentColor: '#6366f1',
+    icon: '🗄️',
+    tagline: 'SQL, Supabase & data modelling',
+    path: '/courses/6',
+    templateSrc: '/certificate-database-engineering-template.png',
+  },
   { id: 7, title: 'Full Stack Application', accentColor: '#f43f5e', icon: '🚀', tagline: 'End-to-end production deployment', path: '/courses/7' },
 ];
 
