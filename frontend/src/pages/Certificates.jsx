@@ -39,7 +39,16 @@ const CERT_COURSES = [
     path: '/courses/6',
     templateSrc: '/certificate-database-engineering-template.png',
   },
-  { id: 7, title: 'Full Stack Application', accentColor: '#f43f5e', icon: '🚀', tagline: 'End-to-end production deployment', path: '/courses/7' },
+  {
+    id: 7,
+    title: 'Full Stack Application',
+    accentColor: '#f43f5e',
+    icon: '🚀',
+    tagline: 'End-to-end production deployment',
+    path: '/courses/7',
+    templateSrc: '/certificate-full-stack-achievement-template.png',
+    certificateLabel: 'Certificate of Achievement',
+  },
 ];
 
 const PASS_PCT      = 75;
@@ -453,10 +462,15 @@ export default function Certificates() {
                   verifying={verifying === course.id}
                   justPaid={paySuccess === course.id}
                   generating={generating === course.id}
+                   certificateLabel={course.certificateLabel}
                   onPayNow={() => openMpesaPrompt(course, assignment)}
                   onDownload={() => handleDownload(course, assignment)}
                 />
-              : <LockedCard key={course.id} course={course} />;
+               : <LockedCard
+                   key={course.id}
+                   course={course}
+                   certificateLabel={course.certificateLabel}
+                 />;
           })}
         </div>
       )}
@@ -669,7 +683,7 @@ function MpesaPromptModal({ course, status, message, error, onClose, onSubmit, o
 }
 
 /* ── Earned certificate card ── */
-function EarnedCard({ course, assignment, studentName, isPaid, paying, verifying, justPaid, generating, onPayNow, onDownload }) {
+function EarnedCard({ course, assignment, studentName, isPaid, paying, verifying, justPaid, generating, certificateLabel, onPayNow, onDownload }) {
   const dateStr = fmtDate(assignment.submitted_at);
 
   return (
@@ -694,7 +708,9 @@ function EarnedCard({ course, assignment, studentName, isPaid, paying, verifying
               {course.icon}
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Certificate of Completion</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">
+                {certificateLabel || 'Certificate of Completion'}
+              </p>
               <h3 className="font-black text-slate-900 text-lg leading-tight">{course.title}</h3>
             </div>
           </div>
@@ -816,7 +832,7 @@ function EarnedCard({ course, assignment, studentName, isPaid, paying, verifying
 }
 
 /* ── Locked certificate card ── */
-function LockedCard({ course }) {
+function LockedCard({ course, certificateLabel }) {
   return (
     <div className="relative overflow-hidden rounded-2xl shadow-soft border-2 border-slate-100 bg-white/60 flex flex-col opacity-70">
       <div className="h-1.5 w-full bg-slate-200" />
@@ -827,7 +843,9 @@ function LockedCard({ course }) {
               {course.icon}
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Certificate of Completion</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">
+                {certificateLabel || 'Certificate of Completion'}
+              </p>
               <h3 className="font-black text-slate-500 text-lg leading-tight">{course.title}</h3>
             </div>
           </div>
