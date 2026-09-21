@@ -12,7 +12,15 @@ import CertificateTemplate from '../components/CertificateTemplate';
 
 const CERT_COURSES = [
   { id: 3, title: 'Vibe Coding',            accentColor: '#f59e0b', icon: '⚡', tagline: 'AI-Powered full-stack project',     path: '/courses/3' },
-  { id: 4, title: 'Frontend Development',   accentColor: '#8b5cf6', icon: '🎨', tagline: 'UI design & React applications',    path: '/courses/4' },
+  {
+    id: 4,
+    title: 'Frontend Development',
+    accentColor: '#8b5cf6',
+    icon: '🎨',
+    tagline: 'UI design & React applications',
+    path: '/courses/4',
+    templateSrc: '/certificate-frontend-development-template.png',
+  },
   { id: 5, title: 'Backend Development',    accentColor: '#10b981', icon: '⚙️', tagline: 'APIs, servers & authentication',    path: '/courses/5' },
   { id: 6, title: 'Database Engineering',   accentColor: '#6366f1', icon: '🗄️', tagline: 'SQL, Supabase & data modelling',   path: '/courses/6' },
   { id: 7, title: 'Full Stack Application', accentColor: '#f43f5e', icon: '🚀', tagline: 'End-to-end production deployment', path: '/courses/7' },
@@ -178,6 +186,7 @@ export default function Certificates() {
         courseTitle: course.title,
         dateStr: formatAwardedDate(issuedAt),
         certificateId,
+        templateSrc: course.templateSrc,
       });
     } catch (error) {
       console.error('Certificate ID generation error:', error);
@@ -456,6 +465,7 @@ export default function Certificates() {
             studentName={studentName}
             dateStr={previewData.dateStr}
             certificateId={previewData.certificateId}
+            templateSrc={previewData.templateSrc}
           />
         )}
       </div>

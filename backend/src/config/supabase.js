@@ -17,6 +17,7 @@ const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
 // confirmation-email behavior. The admin client above remains private and is
 // used for trusted profile/database operations.
 supabaseAdmin.publicAuth = createClient(supabaseUrl, publicKey, {
+  realtime: { transport: ws },
   auth: {
     persistSession: false,
     autoRefreshToken: false,

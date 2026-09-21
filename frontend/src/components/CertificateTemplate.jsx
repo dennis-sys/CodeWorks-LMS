@@ -1,7 +1,12 @@
 import React, { forwardRef } from 'react';
 
 const CertificateTemplate = forwardRef(function CertificateTemplate(
-  { studentName, dateStr, certificateId },
+  {
+    studentName,
+    dateStr,
+    certificateId,
+    templateSrc = '/certificate-completion-template.png',
+  },
   ref
 ) {
   const W = 1122;
@@ -22,7 +27,7 @@ const CertificateTemplate = forwardRef(function CertificateTemplate(
       }}
     >
       <img
-        src="/certificate-completion-template.png"
+        src={templateSrc}
         alt=""
         aria-hidden="true"
         style={{
