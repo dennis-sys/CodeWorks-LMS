@@ -806,32 +806,26 @@ function EarnedCard({ course, assignment, studentName, isPaid, paying, verifying
           </div>
         )}
 
-        {/* Download button */}
-        <button
-          onClick={onDownload}
-          disabled={generating || paying || verifying}
-          className={[
-            'w-full flex items-center justify-center gap-2 font-bold py-3 rounded-xl transition-all shadow-md',
-            'disabled:opacity-70 hover:opacity-90 active:scale-[0.98]',
-            isPaid ? 'text-white' : 'text-white',
-          ].join(' ')}
-          style={{
-            background: isPaid
-              ? course.accentColor
-              : '#64748b',
-            boxShadow: isPaid ? `0 4px 16px ${course.accentColor}50` : 'none',
-          }}
-        >
-          {generating ? (
-            <><Loader2 className="w-4 h-4 animate-spin" /> Generating PDF…</>
-          ) : verifying ? (
-            <><Loader2 className="w-4 h-4 animate-spin" /> Verifying…</>
-          ) : isPaid ? (
-            <><Download className="w-4 h-4" /> Download Certificate PDF</>
-          ) : (
-            <><CreditCard className="w-4 h-4" /> Pay &amp; Download Certificate</>
-          )}
-        </button>
+        {/* Download button — available after payment */}
+        {isPaid && (
+          <button
+            onClick={onDownload}
+            disabled={generating || paying || verifying}
+            className="w-full flex items-center justify-center gap-2 font-bold py-3 rounded-xl transition-all shadow-md text-white disabled:opacity-70 hover:opacity-90 active:scale-[0.98]"
+            style={{
+              background: course.accentColor,
+              boxShadow: `0 4px 16px ${course.accentColor}50`,
+            }}
+          >
+            {generating ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Generating PDF…</>
+            ) : verifying ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Verifying…</>
+            ) : (
+              <><Download className="w-4 h-4" /> Download Certificate PDF</>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );
