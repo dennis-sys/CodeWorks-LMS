@@ -21,7 +21,15 @@ const CERT_COURSES = [
     path: '/courses/4',
     templateSrc: '/certificate-frontend-development-template.png',
   },
-  { id: 5, title: 'Backend Development',    accentColor: '#10b981', icon: '⚙️', tagline: 'APIs, servers & authentication',    path: '/courses/5' },
+  {
+    id: 5,
+    title: 'Backend Development',
+    accentColor: '#10b981',
+    icon: '⚙️',
+    tagline: 'APIs, servers & authentication',
+    path: '/courses/5',
+    templateSrc: '/certificate-backend-development-template.png',
+  },
   { id: 6, title: 'Database Engineering',   accentColor: '#6366f1', icon: '🗄️', tagline: 'SQL, Supabase & data modelling',   path: '/courses/6' },
   { id: 7, title: 'Full Stack Application', accentColor: '#f43f5e', icon: '🚀', tagline: 'End-to-end production deployment', path: '/courses/7' },
 ];
