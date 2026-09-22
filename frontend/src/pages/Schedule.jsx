@@ -1,13 +1,13 @@
 import { Calendar, Clock, MapPin, Video } from 'lucide-react';
 
 const scheduleData = [
-  { id: 1, course: 'Introduction to Software Development', instructor: 'CodeWorks Team', date: '2026-05-13', time: '9:00 AM', status: 'Upcoming', link: '#' },
-  { id: 2, course: 'AI Tools for Software Development', instructor: 'CodeWorks Team', date: '2026-05-20', time: '11:30 AM', status: 'Live', link: '#' },
-  { id: 3, course: 'Vibe Coding', instructor: 'CodeWorks Team', date: '2026-05-22', time: '1:00 PM', status: 'Upcoming', link: '#' },
-  { id: 4, course: 'Frontend Development', instructor: 'CodeWorks Team', date: '2026-05-15', time: '10:00 AM', status: 'Upcoming', link: '#' },
-  { id: 5, course: 'Backend Development', instructor: 'CodeWorks Team', date: '2026-05-25', time: '10:00 AM', status: 'Upcoming', link: '#' },
-  { id: 6, course: 'Database', instructor: 'CodeWorks Team', date: '2026-05-18', time: '2:00 PM', status: 'Upcoming', link: '#' },
-  { id: 7, course: 'Full Stack Application', instructor: 'CodeWorks Team', date: '2026-05-29', time: '2:00 PM', status: 'Upcoming', link: '#' },
+  { id: 1, course: 'Introduction to Software Development', instructor: 'CodeWorks Team', date: 'Oct 10, 2026', time: '2:00 PM EAT', status: 'Upcoming', link: 'https://us05web.zoom.us/j/87445956173?pwd=x5lAzOmvkH5DJxq7n6UaO54uDXdq6j.1' },
+  { id: 2, course: 'AI Tools for Software Development', instructor: 'CodeWorks Team', date: 'Oct 17, 2026', time: '11:30 AM EAT', status: 'Upcoming', link: '#' },
+  { id: 3, course: 'Vibe Coding', instructor: 'CodeWorks Team', date: 'Oct 24, 2026', time: '1:00 PM EAT', status: 'Upcoming', link: '#' },
+  { id: 4, course: 'Frontend Development', instructor: 'CodeWorks Team', date: 'Oct 31, 2026', time: '10:00 AM EAT', status: 'Upcoming', link: '#' },
+  { id: 5, course: 'Backend Development', instructor: 'CodeWorks Team', date: 'Nov 7, 2026', time: '10:00 AM EAT', status: 'Upcoming', link: '#' },
+  { id: 6, course: 'Database', instructor: 'CodeWorks Team', date: 'Nov 14, 2026', time: '2:00 PM EAT', status: 'Upcoming', link: '#' },
+  { id: 7, course: 'Full Stack Application', instructor: 'CodeWorks Team', date: 'Nov 21, 2026', time: '2:00 PM EAT', status: 'Upcoming', link: '#' },
 ];
 
 export default function Schedule() {
@@ -30,9 +30,20 @@ export default function Schedule() {
               <span className={`px-3 py-1 rounded-full text-xs font-bold w-fit ${item.status === 'Live' ? 'bg-red-100 text-red-600' : 'bg-sky-100 text-sky-600'}`}>
                 {item.status}
               </span>
-              <button className="flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl hover:bg-slate-800 transition-all text-sm font-medium">
-                <Video className="w-4 h-4" /> Join Class
-              </button>
+              {item.link && item.link !== '#' ? (
+                <a
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl hover:bg-slate-800 transition-all text-sm font-medium"
+                >
+                  <Video className="w-4 h-4" /> Join Class
+                </a>
+              ) : (
+                <button className="flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl hover:bg-slate-800 transition-all text-sm font-medium">
+                  <Video className="w-4 h-4" /> Join Class
+                </button>
+              )}
             </div>
           </div>
         ))}
