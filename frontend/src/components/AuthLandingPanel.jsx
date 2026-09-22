@@ -12,7 +12,7 @@ const features = [
 export default function AuthLandingPanel({
   onSignIn,
   onCreateAccount,
-  description = 'CodeWorks Academy Program is an online coding course that focuses on software development and artificial intelligence upskilling for the new generation of low code software engineers.',
+  description = 'CodeWorks Academy Project is an online coding course that focuses on software development and artificial intelligence upskilling for the new generation of developers and ai engineers.',
 }) {
   return (
     <main className="relative flex min-h-screen w-full flex-col overflow-hidden bg-[#030712] text-white">

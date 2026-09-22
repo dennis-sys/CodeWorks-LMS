@@ -65,7 +65,7 @@ export default function Login() {
               </span>
             </h1>
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
-              CodeWorks Academy Program is an online coding course that focuses on software development and artificial intelligence upskilling for the new generation of low code software engineers.
+              CodeWorks Academy Project is an online coding course that focuses on software development and artificial intelligence upskilling for the new generation of developers and ai engineers.
             </p>
           </div>
 
