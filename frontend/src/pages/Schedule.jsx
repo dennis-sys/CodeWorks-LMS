@@ -1,9 +1,13 @@
 import { Calendar, Clock, MapPin, Video } from 'lucide-react';
 
 const scheduleData = [
-  { id: 1, course: 'Frontend Dev', instructor: 'Sarah Lee', date: '2026-05-15', time: '10:00 AM', status: 'Upcoming', link: '#' },
-  { id: 2, course: 'Database Systems', instructor: 'Emily Clark', date: '2026-05-18', time: '2:00 PM', status: 'Upcoming', link: '#' },
-  { id: 3, course: 'AI Tools', instructor: 'Jane Doe', date: '2026-05-20', time: '11:30 AM', status: 'Live', link: '#' },
+  { id: 1, course: 'Introduction to Software Development', instructor: 'CodeWorks Team', date: '2026-05-13', time: '9:00 AM', status: 'Upcoming', link: '#' },
+  { id: 2, course: 'AI Tools for Software Development', instructor: 'CodeWorks Team', date: '2026-05-20', time: '11:30 AM', status: 'Live', link: '#' },
+  { id: 3, course: 'Vibe Coding', instructor: 'CodeWorks Team', date: '2026-05-22', time: '1:00 PM', status: 'Upcoming', link: '#' },
+  { id: 4, course: 'Frontend Development', instructor: 'CodeWorks Team', date: '2026-05-15', time: '10:00 AM', status: 'Upcoming', link: '#' },
+  { id: 5, course: 'Backend Development', instructor: 'CodeWorks Team', date: '2026-05-25', time: '10:00 AM', status: 'Upcoming', link: '#' },
+  { id: 6, course: 'Database', instructor: 'CodeWorks Team', date: '2026-05-18', time: '2:00 PM', status: 'Upcoming', link: '#' },
+  { id: 7, course: 'Full Stack Application', instructor: 'CodeWorks Team', date: '2026-05-29', time: '2:00 PM', status: 'Upcoming', link: '#' },
 ];
 
 export default function Schedule() {
