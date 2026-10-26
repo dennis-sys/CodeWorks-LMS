@@ -37,11 +37,22 @@ exports.signUp = async (req, res) => {
       throw createError;
     }
 
+    const authUser = userData?.user;
+    if (Array.isArray(authUser?.identities) && authUser.identities.length === 0) {
+      return res.status(409).json({
+        success: false,
+        message: 'An account with this email already exists. Please sign in or use the password reset option.',
+      });
+    }
+    if (!authUser?.id) {
+      throw new Error('The authentication service did not return a valid user account.');
+    }
+
     const { error: profileError } = await supabase
       .from('users')
       .upsert(
         [{
-          auth_id: userData.user.id,
+          auth_id: authUser.id,
           full_name: fullName.trim(),
           email: email.trim(),
           role: 'student',
@@ -51,7 +62,7 @@ exports.signUp = async (req, res) => {
 
     if (profileError) {
       // Do not leave an auth account behind when the profile cannot be saved.
-      await supabase.auth.admin.deleteUser(userData.user.id);
+      await supabase.auth.admin.deleteUser(authUser.id);
       throw profileError;
     }
 
