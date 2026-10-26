@@ -112,17 +112,48 @@ async function createCertificateId({ ownerId, courseId, studentName, issuedAt })
   return `CW-${issueDate.replace(/-/g, '')}-${(hash >>> 0).toString(16).padStart(8, '0').toUpperCase()}`;
 }
 
-/* ── Load Paystack script once ── */
+const PAYSTACK_INLINE_SCRIPT_URL = 'https://js.paystack.co/v2/inline.js';
+
+function isPaystackPopupV2Ready() {
+  return typeof window.PaystackPop === 'function'
+    && typeof window.PaystackPop.prototype?.newTransaction === 'function';
+}
+
+/* ── Load Paystack Popup V2 once ── */
 function usePaystackScript() {
-  const [ready, setReady] = useState(!!window.PaystackPop);
+  const [ready, setReady] = useState(isPaystackPopupV2Ready);
+
   useEffect(() => {
-    if (window.PaystackPop) { setReady(true); return; }
-    const s = document.createElement('script');
-    s.src = 'https://js.paystack.co/v1/inline.js';
-    s.async = true;
-    s.onload = () => setReady(true);
-    document.head.appendChild(s);
+    if (isPaystackPopupV2Ready()) {
+      setReady(true);
+      return;
+    }
+
+    let script = document.querySelector(`script[src="${PAYSTACK_INLINE_SCRIPT_URL}"]`);
+    const shouldAppend = !script;
+    if (!script) {
+      script = document.createElement('script');
+      script.src = PAYSTACK_INLINE_SCRIPT_URL;
+      script.async = true;
+    }
+
+    const handleLoad = () => {
+      script.dataset.loaded = 'true';
+      setReady(isPaystackPopupV2Ready());
+    };
+    const handleError = () => setReady(false);
+
+    script.addEventListener('load', handleLoad);
+    script.addEventListener('error', handleError);
+    if (script.dataset.loaded === 'true') handleLoad();
+    if (shouldAppend) document.head.appendChild(script);
+
+    return () => {
+      script.removeEventListener('load', handleLoad);
+      script.removeEventListener('error', handleError);
+    };
   }, []);
+
   return ready;
 }
 
@@ -226,7 +257,7 @@ export default function Certificates() {
 
   /* ── Open Paystack popup ── */
   const openPaystack = useCallback(async (course, assignment, onPaidCallback) => {
-    if (!paystackReady || !window.PaystackPop) {
+    if (!paystackReady || !isPaystackPopupV2Ready()) {
       setPayError('Payment system is loading, please try again in a moment.');
       return;
     }
@@ -243,14 +274,14 @@ export default function Certificates() {
         throw new Error('Could not prepare a USD certificate payment quote.');
       }
 
-      const handler = window.PaystackPop.setup({
+      const paystack = new window.PaystackPop();
+      paystack.newTransaction({
         key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
         email: userEmail,
         amount: quote.amount_usd_cents, // Paystack USD amount in cents
         currency: 'USD',
-        ref: quote.reference,
+        reference: quote.reference,
         channels: ['card'],
-        label: studentName,
         metadata: {
           certificate_quote: quote,
           custom_fields: [
@@ -260,7 +291,7 @@ export default function Certificates() {
             { display_name: 'Card Charge (USD)', variable_name: 'card_charge_usd', value: quote.amount_usd },
           ],
         },
-        callback: async (response) => {
+        onSuccess: async (response) => {
           setPayingCourse(null);
           setVerifying(course.id);
           try {
@@ -281,12 +312,14 @@ export default function Certificates() {
             setVerifying(null);
           }
         },
-        onClose: () => {
+        onCancel: () => {
+          setPayingCourse(null);
+        },
+        onError: (error) => {
+          setPayError(error?.message || 'Paystack could not open the card payment. Please try again.');
           setPayingCourse(null);
         },
       });
-
-      handler.openIframe();
     } catch (error) {
       setPayError(error?.message || 'Could not prepare the USD card payment. Please try again.');
       setPayingCourse(null);

@@ -1,0 +1,1 @@
+- [Shell runtime side effects](shell-runtime-side-effects.md) — an ad hoc Python shell command added a Python runtime module to `.replit`; avoid this for one-off inspection.
