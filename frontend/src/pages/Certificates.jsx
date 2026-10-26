@@ -225,7 +225,7 @@ export default function Certificates() {
   }, [ownerId, studentName]);
 
   /* ── Open Paystack popup ── */
-  const openPaystack = useCallback((course, assignment, onPaidCallback) => {
+  const openPaystack = useCallback(async (course, assignment, onPaidCallback) => {
     if (!paystackReady || !window.PaystackPop) {
       setPayError('Payment system is loading, please try again in a moment.');
       return;
@@ -233,51 +233,64 @@ export default function Certificates() {
     setPayError(null);
     setPayingCourse(course.id);
 
-    const reference = `CW-${course.id}-${Date.now()}`;
-    const certificateFeeKes = getCertificateFeeKes(course);
+    try {
+      const quoteResponse = await apiFetch('/payments/card/quote', {
+        method: 'POST',
+        body: JSON.stringify({ course_id: course.id }),
+      });
+      const quote = quoteResponse.data;
+      if (!quote?.reference || !quote?.signature || !Number.isInteger(quote.amount_usd_cents)) {
+        throw new Error('Could not prepare a USD certificate payment quote.');
+      }
 
-    const handler = window.PaystackPop.setup({
-      key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
-      email: userEmail,
-      amount: certificateFeeKes * 100, // Paystack uses kobo (lowest unit)
-      currency: 'KES',
-      ref: reference,
-      channels: ['card', 'mobile_money'],   // card = Visa/Mastercard, mobile_money = M-Pesa
-      label: studentName,
-      metadata: {
-        custom_fields: [
-          { display_name: 'Student Name', variable_name: 'student_name', value: studentName },
-          { display_name: 'Course',        variable_name: 'course',        value: course.title },
-          { display_name: 'Certificate',   variable_name: 'certificate',   value: 'yes' },
-        ],
-      },
-      callback: async (response) => {
-        setPayingCourse(null);
-        setVerifying(course.id);
-        try {
-          await apiFetch('/payments/verify', {
-            method: 'POST',
-            body: JSON.stringify({ reference: response.reference, course_id: course.id }),
-          });
-          setPaidCourses(prev => ({
-            ...prev,
-            [course.id]: { paid: true, paid_at: new Date().toISOString(), channel: response.channel },
-          }));
-          setPaySuccess(course.id);
-          setTimeout(() => setPaySuccess(null), 4000);
-          await onPaidCallback?.();
-        } catch {
-          setPayError('Payment was received but verification failed. Please contact support.');
-        } finally {
-          setVerifying(null);
-        }
-      },
-      onClose: () => {
-        setPayingCourse(null);
-      },
-    });
+      const handler = window.PaystackPop.setup({
+        key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+        email: userEmail,
+        amount: quote.amount_usd_cents, // Paystack USD amount in cents
+        currency: 'USD',
+        ref: quote.reference,
+        channels: ['card'],
+        label: studentName,
+        metadata: {
+          certificate_quote: quote,
+          custom_fields: [
+            { display_name: 'Student Name', variable_name: 'student_name', value: studentName },
+            { display_name: 'Course', variable_name: 'course', value: course.title },
+            { display_name: 'Certificate Fee (KES)', variable_name: 'certificate_fee_kes', value: String(quote.fee_kes) },
+            { display_name: 'Card Charge (USD)', variable_name: 'card_charge_usd', value: quote.amount_usd },
+          ],
+        },
+        callback: async (response) => {
+          setPayingCourse(null);
+          setVerifying(course.id);
+          try {
+            await apiFetch('/payments/verify', {
+              method: 'POST',
+              body: JSON.stringify({ reference: response.reference, course_id: course.id }),
+            });
+            setPaidCourses(prev => ({
+              ...prev,
+              [course.id]: { paid: true, paid_at: new Date().toISOString(), channel: response.channel },
+            }));
+            setPaySuccess(course.id);
+            setTimeout(() => setPaySuccess(null), 4000);
+            await onPaidCallback?.();
+          } catch {
+            setPayError('Payment was received but verification failed. Please contact support.');
+          } finally {
+            setVerifying(null);
+          }
+        },
+        onClose: () => {
+          setPayingCourse(null);
+        },
+      });
 
-    handler.openIframe();
+      handler.openIframe();
+    } catch (error) {
+      setPayError(error?.message || 'Could not prepare the USD card payment. Please try again.');
+      setPayingCourse(null);
+    }
   }, [paystackReady, userEmail, studentName]);
 
   /* ── Open the focused M-Pesa prompt ── */
@@ -670,13 +683,18 @@ function MpesaPromptModal({ course, feeKes, status, message, error, onClose, onS
               Done
             </button>
           ) : !isBusy ? (
-            <button
-              type="button"
-              onClick={onPayWithCard}
-              className="w-full rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
-            >
-              Pay with Visa / Mastercard instead
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={onPayWithCard}
+                className="w-full rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+              >
+                Pay with Visa / Mastercard in USD
+              </button>
+              <p className="text-center text-xs text-slate-400">
+                Card checkout uses the current USD equivalent of the KES certificate fee.
+              </p>
+            </>
           ) : null}
 
           <p className="text-center text-[11px] leading-relaxed text-slate-400">

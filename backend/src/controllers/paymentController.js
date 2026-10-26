@@ -1,12 +1,131 @@
 const supabase = require('../config/supabase');
+const crypto = require('crypto');
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
 const CERT_AMOUNT = 100000; // 1,000 KES in kobo (Paystack lowest unit)
 const FULL_STACK_CERT_AMOUNT = 500000; // 5,000 KES in kobo (Paystack lowest unit)
 const CURRENCY = 'KES';
+const USD_CURRENCY = 'USD';
+const USD_MINIMUM_CENTS = 200;
+const CARD_QUOTE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const FX_RATE_URL = 'https://open.er-api.com/v6/latest/USD';
+let cachedUsdKesRate = null;
 
 function getCertificateAmount(courseId) {
   return Number(courseId) === 7 ? FULL_STACK_CERT_AMOUNT : CERT_AMOUNT;
+}
+
+function createCardQuoteSignature({
+  reference,
+  userId,
+  courseId,
+  feeKesMinor,
+  amountUsdCents,
+  exchangeRateKesPerUsd,
+  issuedAt,
+}) {
+  const payload = [
+    reference,
+    userId,
+    Number(courseId),
+    Number(feeKesMinor),
+    Number(amountUsdCents),
+    exchangeRateKesPerUsd,
+    Number(issuedAt),
+  ].join('|');
+
+  return crypto.createHmac('sha256', PAYSTACK_SECRET).update(payload).digest('hex');
+}
+
+function parsePaymentMetadata(metadata) {
+  if (metadata && typeof metadata === 'object') return metadata;
+  if (typeof metadata === 'string') {
+    try {
+      return JSON.parse(metadata);
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+function isValidUsdCardPayment({ userId, courseId, reference, payment }) {
+  if (payment.currency !== USD_CURRENCY || payment.channel !== 'card') return false;
+
+  const quote = parsePaymentMetadata(payment.metadata).certificate_quote;
+  if (!quote || typeof quote !== 'object') return false;
+
+  const expectedKesMinor = getCertificateAmount(courseId);
+  const issuedAt = Number(quote.issued_at);
+  const quoteAge = Date.now() - issuedAt;
+  const signature = String(quote.signature || '');
+
+  if (
+    quote.reference !== reference
+    || quote.user_id !== userId
+    || Number(quote.course_id) !== Number(courseId)
+    || Number(quote.fee_kes_minor) !== expectedKesMinor
+    || Number(quote.amount_usd_cents) !== Number(payment.amount)
+    || Number(payment.amount) < USD_MINIMUM_CENTS
+    || !Number.isFinite(issuedAt)
+    || quoteAge < -5 * 60 * 1000
+    || quoteAge > CARD_QUOTE_MAX_AGE_MS
+    || !/^[a-f0-9]{64}$/i.test(signature)
+  ) {
+    return false;
+  }
+
+  const expectedSignature = createCardQuoteSignature({
+    reference: quote.reference,
+    userId: quote.user_id,
+    courseId: quote.course_id,
+    feeKesMinor: quote.fee_kes_minor,
+    amountUsdCents: quote.amount_usd_cents,
+    exchangeRateKesPerUsd: quote.exchange_rate_kes_per_usd,
+    issuedAt: quote.issued_at,
+  });
+
+  return crypto.timingSafeEqual(
+    Buffer.from(signature, 'hex'),
+    Buffer.from(expectedSignature, 'hex'),
+  );
+}
+
+async function getUsdKesExchangeRate() {
+  if (cachedUsdKesRate && cachedUsdKesRate.expiresAt > Date.now()) {
+    return cachedUsdKesRate.rate;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(FX_RATE_URL, { signal: controller.signal });
+    const data = await response.json();
+    const rate = Number(data?.rates?.KES);
+    const updatedAt = Date.parse(data?.time_last_update_utc || '');
+
+    if (
+      !response.ok
+      || data?.result !== 'success'
+      || !Number.isFinite(rate)
+      || rate <= 0
+      || !Number.isFinite(updatedAt)
+      || Date.now() - updatedAt > 48 * 60 * 60 * 1000
+    ) {
+      throw new Error('Exchange-rate provider returned an invalid or stale rate');
+    }
+
+    cachedUsdKesRate = {
+      rate,
+      expiresAt: Math.min(
+        Date.now() + 6 * 60 * 60 * 1000,
+        Date.parse(data.time_next_update_utc || '') || Date.now() + 6 * 60 * 60 * 1000,
+      ),
+    };
+    return rate;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 const MIGRATION_SQL = `
@@ -72,7 +191,10 @@ async function fetchPaystackTransaction(reference) {
 
 async function recordSuccessfulPayment({ userId, courseId, reference, payment }) {
   const certificateAmount = getCertificateAmount(courseId);
-  if (payment.currency !== CURRENCY || payment.amount < certificateAmount) {
+  const validKesPayment = payment.currency === CURRENCY && payment.amount >= certificateAmount;
+  const validUsdPayment = isValidUsdCardPayment({ userId, courseId, reference, payment });
+
+  if (payment.reference !== reference || (!validKesPayment && !validUsdPayment)) {
     const error = new Error('Payment amount or currency mismatch');
     error.statusCode = 402;
     throw error;
@@ -100,6 +222,64 @@ async function recordSuccessfulPayment({ userId, courseId, reference, payment })
     }
   }
 }
+
+/* ── Create a signed, current USD card quote from the KES certificate fee ── */
+exports.getCardPaymentQuote = async (req, res) => {
+  const courseId = Number(req.body?.course_id);
+  if (!Number.isInteger(courseId) || courseId < 1 || courseId > 7) {
+    return res.status(400).json({ success: false, message: 'A valid course_id is required' });
+  }
+  if (!req.user?.id || !req.user?.email) {
+    return res.status(400).json({ success: false, message: 'Your account is required for card payment' });
+  }
+  if (!PAYSTACK_SECRET) {
+    return res.status(503).json({ success: false, message: 'Payment service is not configured' });
+  }
+
+  try {
+    const exchangeRateKesPerUsd = await getUsdKesExchangeRate();
+    const exchangeRateString = exchangeRateKesPerUsd.toFixed(6);
+    const feeKesMinor = getCertificateAmount(courseId);
+    const feeKes = feeKesMinor / 100;
+    const amountUsdCents = Math.ceil((feeKes / exchangeRateKesPerUsd) * 100);
+
+    if (amountUsdCents < USD_MINIMUM_CENTS) {
+      return res.status(400).json({
+        success: false,
+        message: 'The USD card equivalent is below Paystack’s minimum card charge.',
+      });
+    }
+
+    const reference = `CW-CERT-${courseId}-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
+    const issuedAt = Date.now();
+    const quote = {
+      reference,
+      user_id: req.user.id,
+      course_id: courseId,
+      fee_kes_minor: feeKesMinor,
+      amount_usd_cents: amountUsdCents,
+      exchange_rate_kes_per_usd: exchangeRateString,
+      issued_at: issuedAt,
+    };
+    quote.signature = createCardQuoteSignature(quote);
+
+    return res.json({
+      success: true,
+      data: {
+        ...quote,
+        fee_kes: feeKes,
+        amount_usd: (amountUsdCents / 100).toFixed(2),
+        currency: USD_CURRENCY,
+      },
+    });
+  } catch (error) {
+    console.error('getCardPaymentQuote error:', error);
+    return res.status(503).json({
+      success: false,
+      message: 'Could not retrieve the current USD exchange rate. Please try again shortly.',
+    });
+  }
+};
 
 /* ── Start an M-Pesa STK push through Paystack ── */
 exports.requestMpesaPayment = async (req, res) => {
