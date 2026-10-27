@@ -4,13 +4,13 @@ import { PlayCircle } from 'lucide-react';
 import { useCourseStore, getActivityLog } from '../store/courseStore';
 
 const COURSE_META = [
-  { id: 1, title: 'Introduction to Software Development', duration: '2 Weeks', instructor: 'CodeWorks Team', status: 'Active', image: 'https://images.pexels.com/photos/5380664/pexels-photo-5380664.jpeg' },
-  { id: 2, title: 'AI Tools for Software Development', duration: '4 Weeks', instructor: 'CodeWorks Team', status: 'Active', image: 'https://images.pexels.com/photos/8294606/pexels-photo-8294606.jpeg' },
-  { id: 3, title: 'Vibe Coding', duration: '4 Weeks', instructor: 'CodeWorks Team', status: 'Active', image: 'https://images.pexels.com/photos/29445974/pexels-photo-29445974.jpeg' },
-  { id: 4, title: 'Frontend Development', duration: '4 Weeks', instructor: 'CodeWorks Team', status: 'Active', image: 'https://images.pexels.com/photos/3987019/pexels-photo-3987019.jpeg' },
-  { id: 5, title: 'Backend Development', duration: '4 Weeks', instructor: 'CodeWorks Team', status: 'Active', image: 'https://images.pexels.com/photos/5380589/pexels-photo-5380589.jpeg' },
-  { id: 6, title: 'Database', duration: '4 Weeks', instructor: 'CodeWorks Team', status: 'Active', image: 'https://images.pexels.com/photos/117729/pexels-photo-117729.jpeg' },
-  { id: 7, title: 'Full Stack Application', duration: '2 Weeks', instructor: 'CodeWorks Team', status: 'Not Started', image: 'https://images.pexels.com/photos/32944547/pexels-photo-32944547.jpeg' },
+  { id: 1, title: 'Introduction to Software Development', duration: '2 Weeks', instructor: 'CodeWorks Team', status: 'Active', image: '/course-images/introduction.webp' },
+  { id: 2, title: 'AI Tools for Software Development', duration: '4 Weeks', instructor: 'CodeWorks Team', status: 'Active', image: '/course-images/ai-tools.webp' },
+  { id: 3, title: 'Vibe Coding', duration: '4 Weeks', instructor: 'CodeWorks Team', status: 'Active', image: '/course-images/vibe-coding.webp' },
+  { id: 4, title: 'Frontend Development', duration: '4 Weeks', instructor: 'CodeWorks Team', status: 'Active', image: '/course-images/frontend-development.webp' },
+  { id: 5, title: 'Backend Development', duration: '4 Weeks', instructor: 'CodeWorks Team', status: 'Active', image: '/course-images/backend-development.webp' },
+  { id: 6, title: 'Database', duration: '4 Weeks', instructor: 'CodeWorks Team', status: 'Active', image: '/course-images/database.webp' },
+  { id: 7, title: 'Full Stack Application', duration: '2 Weeks', instructor: 'CodeWorks Team', status: 'Not Started', image: '/course-images/full-stack-application.webp' },
 ];
 
 const DIST_COLOURS = {
@@ -103,7 +103,7 @@ export default function Dashboard() {
             <div key={c.id} className="group glass rounded-2xl overflow-hidden shadow-soft hover:shadow-lg transition-all duration-300">
               <div className="h-36 relative overflow-hidden">
                 {c.image
-                  ? <img src={c.image} alt={c.title} className="w-full h-full object-cover" />
+                  ? <img src={c.image} alt={c.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   : <div className="w-full h-full bg-gradient-to-r from-sky-100 to-slate-100" />
                 }
                 <span className="absolute top-3 right-3 bg-white/80 backdrop-blur px-2 py-1 rounded-md text-xs font-semibold text-sky-600 shadow-sm">
