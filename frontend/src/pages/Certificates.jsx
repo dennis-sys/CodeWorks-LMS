@@ -116,7 +116,7 @@ const PAYSTACK_INLINE_SCRIPT_URL = 'https://js.paystack.co/v2/inline.js';
 
 function isPaystackPopupV2Ready() {
   return typeof window.PaystackPop === 'function'
-    && typeof window.PaystackPop.prototype?.newTransaction === 'function';
+    && typeof window.PaystackPop.prototype?.resumeTransaction === 'function';
 }
 
 /* ── Load Paystack Popup V2 once ── */
@@ -270,27 +270,12 @@ export default function Certificates() {
         body: JSON.stringify({ course_id: course.id }),
       });
       const quote = quoteResponse.data;
-      if (!quote?.reference || !quote?.signature || !Number.isInteger(quote.amount_usd_cents)) {
-        throw new Error('Could not prepare a USD certificate payment quote.');
+      if (!quote?.reference || !quote?.signature || !quote?.access_code) {
+        throw new Error('Could not initialize the USD certificate payment.');
       }
 
       const paystack = new window.PaystackPop();
-      paystack.newTransaction({
-        key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
-        email: userEmail,
-        amount: quote.amount_usd_cents, // Paystack USD amount in cents
-        currency: 'USD',
-        reference: quote.reference,
-        channels: ['card'],
-        metadata: {
-          certificate_quote: quote,
-          custom_fields: [
-            { display_name: 'Student Name', variable_name: 'student_name', value: studentName },
-            { display_name: 'Course', variable_name: 'course', value: course.title },
-            { display_name: 'Certificate Fee (KES)', variable_name: 'certificate_fee_kes', value: String(quote.fee_kes) },
-            { display_name: 'Card Charge (USD)', variable_name: 'card_charge_usd', value: quote.amount_usd },
-          ],
-        },
+      paystack.resumeTransaction(quote.access_code, {
         onSuccess: async (response) => {
           setPayingCourse(null);
           setVerifying(course.id);
@@ -324,7 +309,7 @@ export default function Certificates() {
       setPayError(error?.message || 'Could not prepare the USD card payment. Please try again.');
       setPayingCourse(null);
     }
-  }, [paystackReady, userEmail, studentName]);
+  }, [paystackReady]);
 
   /* ── Open the focused M-Pesa prompt ── */
   const openMpesaPrompt = useCallback((course, assignment) => {

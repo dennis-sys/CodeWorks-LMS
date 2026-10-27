@@ -223,7 +223,7 @@ async function recordSuccessfulPayment({ userId, courseId, reference, payment })
   }
 }
 
-/* ── Create a signed, current USD card quote from the KES certificate fee ── */
+/* ── Create a signed USD quote and initialize its Paystack card transaction ── */
 exports.getCardPaymentQuote = async (req, res) => {
   const courseId = Number(req.body?.course_id);
   if (!Number.isInteger(courseId) || courseId < 1 || courseId > 7) {
@@ -263,6 +263,44 @@ exports.getCardPaymentQuote = async (req, res) => {
     };
     quote.signature = createCardQuoteSignature(quote);
 
+    const paystackResponse = await fetch('https://api.paystack.co/transaction/initialize', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${PAYSTACK_SECRET}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: req.user.email,
+        amount: amountUsdCents,
+        currency: USD_CURRENCY,
+        reference,
+        channels: ['card'],
+        metadata: {
+          certificate_quote: quote,
+          custom_fields: [
+            { display_name: 'Student Name', variable_name: 'student_name', value: req.user.user_metadata?.full_name || 'Student' },
+            { display_name: 'Course ID', variable_name: 'course_id', value: String(courseId) },
+            { display_name: 'Certificate Fee (KES)', variable_name: 'certificate_fee_kes', value: String(feeKes) },
+            { display_name: 'Card Charge (USD)', variable_name: 'card_charge_usd', value: (amountUsdCents / 100).toFixed(2) },
+          ],
+        },
+      }),
+    });
+    const paystackData = await paystackResponse.json().catch(() => null);
+
+    if (
+      !paystackResponse.ok
+      || !paystackData?.status
+      || !paystackData.data?.access_code
+      || paystackData.data.reference !== reference
+    ) {
+      console.error('Paystack USD card initialization failed:', paystackData?.message || paystackResponse.status);
+      return res.status(502).json({
+        success: false,
+        message: paystackData?.message || 'Paystack could not initialize the USD card payment.',
+      });
+    }
+
     return res.json({
       success: true,
       data: {
@@ -270,13 +308,14 @@ exports.getCardPaymentQuote = async (req, res) => {
         fee_kes: feeKes,
         amount_usd: (amountUsdCents / 100).toFixed(2),
         currency: USD_CURRENCY,
+        access_code: paystackData.data.access_code,
       },
     });
   } catch (error) {
     console.error('getCardPaymentQuote error:', error);
     return res.status(503).json({
       success: false,
-      message: 'Could not retrieve the current USD exchange rate. Please try again shortly.',
+      message: 'Could not prepare the USD card payment. Please try again shortly.',
     });
   }
 };

@@ -1,2 +1,3 @@
 - [Shell runtime side effects](shell-runtime-side-effects.md) — an ad hoc Python shell command added a Python runtime module to `.replit`; avoid this for one-off inspection.
 - [Supabase duplicate signup responses](supabase-duplicate-signups.md) — with email confirmation enabled, duplicate signup may return a placeholder user with no identities.
+- [Paystack card initialization](paystack-card-initialization.md) — initialize card transactions on the server, then resume the returned access code in Popup V2.
