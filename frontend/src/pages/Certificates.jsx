@@ -270,8 +270,8 @@ export default function Certificates() {
         body: JSON.stringify({ course_id: course.id }),
       });
       const quote = quoteResponse.data;
-      if (!quote?.reference || !quote?.signature || !quote?.access_code) {
-        throw new Error('Could not initialize the USD certificate payment.');
+      if (!quote?.reference || !quote?.signature || !quote?.access_code || quote.currency !== 'KES') {
+        throw new Error('Could not initialize the KES certificate payment.');
       }
 
       const paystack = new window.PaystackPop();
@@ -306,7 +306,7 @@ export default function Certificates() {
         },
       });
     } catch (error) {
-      setPayError(error?.message || 'Could not prepare the USD card payment. Please try again.');
+      setPayError(error?.message || 'Could not prepare the KES card payment. Please try again.');
       setPayingCourse(null);
     }
   }, [paystackReady]);
@@ -707,10 +707,10 @@ function MpesaPromptModal({ course, feeKes, status, message, error, onClose, onS
                 onClick={onPayWithCard}
                 className="w-full rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
               >
-                Pay with Visa / Mastercard in USD
+                Pay with Visa / Mastercard in KES
               </button>
               <p className="text-center text-xs text-slate-400">
-                Card checkout uses the current USD equivalent of the KES certificate fee.
+                Card payments are charged directly in KES.
               </p>
             </>
           ) : null}
@@ -810,10 +810,10 @@ function EarnedCard({ course, assignment, studentName, isPaid, paying, verifying
             {/* Payment method badges */}
             <div className="flex gap-2 flex-wrap">
               <span className="flex items-center gap-1.5 bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">
-                <Smartphone className="w-3 h-3" /> M-Pesa
+                <Smartphone className="w-3 h-3" /> M-Pesa · KES
               </span>
               <span className="flex items-center gap-1.5 bg-sky-100 text-sky-700 text-xs font-semibold px-2.5 py-1 rounded-full">
-                <CreditCard className="w-3 h-3" /> Visa / Mastercard
+                <CreditCard className="w-3 h-3" /> Visa / Mastercard · KES
               </span>
             </div>
 

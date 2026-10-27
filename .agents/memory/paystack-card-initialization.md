@@ -3,8 +3,8 @@ name: Paystack card initialization
 description: The server-side transaction setup convention for Paystack card checkout.
 ---
 
-Initialize Paystack card transactions on the backend with the authoritative amount, currency, reference, and signed metadata; have the browser resume the returned access code with Popup V2 callbacks. Keep the secret key on the server.
+This Paystack merchant rejects USD for certificate card transactions. Initialize new certificate card transactions on the backend in KES using the exact certificate fee, then have the browser resume the returned access code with Popup V2 callbacks. Keep the secret key on the server.
 
-**Why:** Client-side transaction setup produced invalid-parameter errors and duplicated trusted payment parameters in the browser.
+**Why:** Paystack returned “Currency not supported by merchant” for USD. KES is the merchant's local supported currency; USD depends on merchant-level activation and account setup.
 
-**How to apply:** For certificate card checkout, derive the KES-to-USD amount and signature on the backend, initialize through Paystack's transaction API, and resume that access code in the frontend.
+**How to apply:** For certificate card checkout, use the authoritative KES fee and signed metadata in Paystack's server-side transaction initialization, then resume that access code in the frontend. Keep M-Pesa behavior unchanged.
